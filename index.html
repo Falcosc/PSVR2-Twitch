@@ -4,11 +4,50 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
 <link rel="stylesheet" href="https://www.w3schools.com/lib/w3-theme-blue.css">
+<style>
+#lastError p {
+    display: none;
+}
+#lastError p:nth-last-of-type(-n+3) {
+    display: inherit;
+}
+</style>
 <script type="text/javascript" src="scripts/tmi.js"></script>
 <script type="text/javascript" src="scripts/main.js"></script>
 <body class="w3-theme-d5 w3-padding-large" onload="loadSettings()">
+
+	<div class="w3-panel w3-red w3-display-container w3-small" id="lastError" style="display:none">
+		<span onclick="this.parentElement.style.display='none'"class="w3-button w3-large w3-display-topright">&times;</span>
+		<template id="errorLine">
+			<p class="w3-tiny">
+				<span class="w3-small"></span><br>
+				<span style="white-space: pre" ></span>
+			</p>
+		</template>
+	</div>
+	<div class="w3-panel w3-pale-yellow w3-border w3-small">
+		<h1 class="w3-large">Paid Messages are not tested!</h1>
+		<p>I am not sure if bits and sub messages do already work. But even if they do, currently they don't get priority and could get skipped on busy daiys like any normal chat message.</p>
+	</div>
+	<script>
+	function displayError(source, lineno, colno, error, stack){
+		const file = source.replace(/.*\//,'/').replace(/[?#].*/,'');
+		const time = (new Date()).toLocaleTimeString();
+		const errorLine = document.querySelector("#errorLine").content.cloneNode(true);
+		let span = errorLine.querySelectorAll("span");
+		span[0].textContent = `${time} ${file}:${lineno}:${colno} ${error}`;
+		span[1].textContent = stack;
+		document.querySelector("#lastError").appendChild(errorLine);
+		document.querySelector("#lastError").style.display = '';
+	}
+	window.onerror = (event, source, lineno, colno, error) => {
+		displayError(source, lineno, colno, error, error.stack);
+	}
+	window.addEventListener("unhandledrejection", (event) => {
+		displayError(event.reason.fileName, event.reason.lineNumber, event.reason.columnNumber, event.reason.message, event.reason.stack);
+	});
+	</script>
 	<h2>PSVR2 Twitch Chat</h2>
-	
 
 	<form id="connectionForm">
 		<label>Twitch Access Token</label>
@@ -30,7 +69,7 @@
 		<button class="w3-button w3-red" id="stopBtn" disabled>Stop</button>
 	</p>
 	<div class="w3-cell w3-mobile">
-		<div class="w3-card-4 w3-margin-right" style="min-width:340px">
+		<div class="w3-card-4 w3-margin-right w3-margin-bottom" style="min-width:340px">
 			<div class="w3-container w3-theme-d3">
 				<h3>Stream/Channel Status Voice</h3>
 			</div>
@@ -50,7 +89,7 @@
 		</div>
 	</div>
 	<div class="w3-cell w3-mobile">
-		<div class="w3-card-4 w3-margin-right" style="min-width:340px">
+		<div class="w3-card-4 w3-margin-right w3-margin-bottom" style="min-width:340px">
 			<div class="w3-container w3-theme-d3">
 				<h3>Chat Message Voice</h3>
 			</div>
