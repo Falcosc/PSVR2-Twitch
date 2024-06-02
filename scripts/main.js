@@ -44,6 +44,10 @@ function loadSettings() {
 
 function loadVoices() {
 	voices = window.speechSynthesis.getVoices();
+	console.log(voices);
+	if(!voices?.length > 0){
+		return;
+	}
 	let voiceSelects = document.querySelectorAll('select[name="voice"]');
 	voiceSelects.forEach((selectElement) => selectElement.innerHTML = '');
 	voices.forEach((voice) => {
@@ -55,7 +59,7 @@ function loadVoices() {
 		voiceSelects.forEach((selectElement) => selectElement.appendChild(option.cloneNode(true)));
 	});
 
-	document.querySelector('#statusVoice [name=voice]').value=voices.find((v) => v.lang.includes('en')).name;
+	document.querySelector('#statusVoice [name=voice]').value=voices?.find((v) => v.lang.includes('en'))?.name;
 	// [...document.querySelector('#statusVoice [name=voice]').options].map(o => o.value).includes(voiceFromSettings) 
 }
 
