@@ -14,8 +14,14 @@
 </style>
 <script type="text/javascript" src="scripts/tmi.js"></script>
 <script type="text/javascript" src="scripts/main.js"></script>
-<body class="w3-theme-d5 w3-padding-large" onload="loadSettings()">
+<body class="w3-theme-d5" onload="loadSettings()">
 
+	<div class="w3-theme-d4 w3-bar">
+	<h2 class="w3-bar-item">PSVR2 Twitch Chat</h2>
+	<a href="https://github.com/Falcosc/PSVR2-Twitch#Why-PSVR2" target="_blank" class="w3-bar-item w3-button w3-right w3-theme">What is this and why does it exist?</a>
+	</div>
+
+	<div class="w3-container w3-padding-large">
 	<div class="w3-panel w3-red w3-display-container w3-small" id="lastError" style="display:none">
 		<span onclick="this.parentElement.style.display='none'"class="w3-button w3-large w3-display-topright">&times;</span>
 		<template id="errorLine">
@@ -24,10 +30,6 @@
 				<span style="white-space: pre" ></span>
 			</p>
 		</template>
-	</div>
-	<div class="w3-panel w3-pale-yellow w3-border w3-small">
-		<h1 class="w3-large">Paid Messages are not tested!</h1>
-		<p>I am not sure if bits and sub messages do already work. But even if they do, currently they don't get priority and could get skipped on busy daiys like any normal chat message.</p>
 	</div>
 	<script>
 	function displayError(source, lineno, colno, error, stack){
@@ -38,7 +40,7 @@
 		span[0].textContent = `${time} ${file}:${lineno}:${colno} ${error}`;
 		span[1].textContent = stack;
 		document.querySelector("#lastError").appendChild(errorLine);
-		document.querySelector("#lastError").style.display = '';
+		document.querySelector("#lastError").style.display = 'block';
 	}
 	window.onerror = (event, source, lineno, colno, error) => {
 		displayError(source, lineno, colno, error, error.stack);
@@ -47,7 +49,10 @@
 		displayError(event.reason.fileName, event.reason.lineNumber, event.reason.columnNumber, event.reason.message, event.reason.stack);
 	});
 	</script>
-	<h2>PSVR2 Twitch Chat</h2>
+	<div class="w3-panel w3-pale-yellow w3-border w3-small">
+		<h1 class="w3-large">Paid Messages are not tested!</h1>
+		<p>I am not sure if bits and sub messages do already work. But even if they do, currently they don't get priority and could get skipped on busy days like any normal chat message.</p>
+	</div>
 
 	<form id="connectionForm">
 		<label>Twitch Access Token</label>
@@ -107,6 +112,7 @@
 			<button class="w3-button w3-theme w3-block" type="submit" value="Submit" disabled>Test Chat Voice</button>
 			</form>
 		</div>
+	</div>
 	</div>
 </body>
 </html>
