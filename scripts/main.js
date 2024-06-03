@@ -43,6 +43,7 @@ function loadSettings() {
 }
 
 function loadVoices() {
+	speechSynthesis.cancel();
 	voices = window.speechSynthesis.getVoices();
 	console.log(voices);
 	if(!voices?.length > 0){
@@ -59,8 +60,9 @@ function loadVoices() {
 		voiceSelects.forEach((selectElement) => selectElement.appendChild(option.cloneNode(true)));
 	});
 
-	document.querySelector('#statusVoice [name=voice]').value=voices?.find((v) => v.lang.includes('en'))?.name;
-	// [...document.querySelector('#statusVoice [name=voice]').options].map(o => o.value).includes(voiceFromSettings) 
+	document.querySelector('#statusVoice [name=voice]').value=voices?.find(v => v.lang.includes('en'))?.name;
+	document.querySelector('form[name=chatVoice] [name=voice]').value=voices?.find(v => v.lang.includes(navigator.language))?.name; 
+	//[...document.querySelector('#statusVoice [name=voice]').options].map(o => o.value).includes(voiceFromSettings) 
 }
 
 async function getStreamStatus(channel){
@@ -173,12 +175,12 @@ function start(e){
 	//TODO on "submysterygift" get gift subs
 
 	client.on('message', (channel, user, message, self) => {
-		console.log(message);
 		if (self) return;
 		if (user['message-type'] === 'chat') {
 			if (window.speechSynthesis.speaking) {
-				console.error('SpeechSynthesisUtterance.speaking, skipped message: ' + msg);
+				console.error('SpeechSynthesisUtterance.speaking, skipped message: ' + message);
 			} else {
+				message = removeEmojisExceptFirst(message);
 				speak(message, new FormData(chatVoice), function () {
 					console.log('message was spoken: ' + message);
 				});
@@ -239,4 +241,16 @@ function speak(msg, formData, onEnd) {
 		utterThis.rate = formData.get('rate');
 		window.speechSynthesis.speak(utterThis);
 	}
+}
+
+function removeEmojisExceptFirst(string) {
+	let alreadyFound = false;
+	return string.replace(/\p{Extended_Pictographic}/gu, match => {
+		if (alreadyFound) {
+			return ''
+		} else {
+			alreadyFound = true;
+			return match;
+		}
+	})
 }

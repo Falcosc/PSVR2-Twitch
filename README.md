@@ -11,6 +11,7 @@ Since you don't want this audio to feed into your Stream, a secondary device is 
 
 During playing around with the voices, I found out that Microsoft included a huge amount of Voices in Microsoft Edge to Windows.
 This will become useful as soon as we add the feature of rotating voices to differentiate between chat users.
+Default voices in Safari are the worst I have heard to far, you should install Enhanced/Premium voices on Apple devices to use it.
 
 If you don't want to wait until your idea gets merged or if you just want to try out some script adjustments, you can just download the files and launch it from your file system instead.
 
@@ -63,6 +64,7 @@ These are my ideas so far, some of them are already implemented:
 - notification if my streaming system stops working and the stream goes offline (without viewers nobody will inform you if your recording breaks) checks status every 5 seconds
 - audio ping every x minutes in periods of silence to notify that everything is still working
 - notification about viewers, no need to talk to my self if I just record for my self.
+- translate only one emoji per message
 
 If you are interested in more, just share your ideas:
 https://github.com/Falcosc/PSVR2-Twitch/discussions
