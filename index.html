@@ -6,10 +6,13 @@
 <link rel="stylesheet" href="https://www.w3schools.com/lib/w3-theme-blue.css">
 <style>
 #lastError p {
-    display: none;
+	display: none;
 }
 #lastError p:nth-last-of-type(-n+3) {
-    display: inherit;
+	display: inherit;
+}
+form {
+	width:340px;
 }
 </style>
 <script type="text/javascript" src="scripts/tmi.js"></script>
@@ -54,31 +57,34 @@
 		<p>I am not sure if bits and sub messages do already work. But even if they do, currently they don't get priority and could get skipped on busy days like any normal chat message.</p>
 	</div>
 
-	<form id="connectionForm">
-		<label>Twitch Access Token</label>
-		<div class="w3-row">
-			<div class="w3-col" style="width:300px">
+	<form id="connectionForm" class="w3-left w3-margin-right">
+		<div>
+			<label>Twitch Access Token</label>
+			<div>
 				<input class="w3-input" type="password" id="accessToken">
+				<a href="https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=368mzno8zop311dlixwz4v7qvp0dgz&redirect_uri=https://falcosc.github.io/PSVR2-Twitch/&scope=chat:read&force_verify=true"
+					class="w3-button w3-deep-purple" style="width:100%">Get Twitch Access Token</a>
 			</div>
-			<div class="w3-rest"><a href="https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=368mzno8zop311dlixwz4v7qvp0dgz&redirect_uri=https://falcosc.github.io/PSVR2-Twitch/&scope=chat:read&force_verify=true"
-				class="w3-button w3-deep-purple w3-margin-left">Get Twitch Access Token</a></div>
 		</div>
-		<p><label>Twitch Bot Display Name</label>
-		<input class="w3-input" style="width:300px" type="text" id="displayName">
+		<p>
+			<label>Twitch Bot Display Name</label>
+			<input class="w3-input" type="text" id="displayName">
 		</p>
-		<p><label>Steam/Channel to Monitor</label>
-		<input class="w3-input" style="width:300px" type="text" id="channel"></p>
+		<p>
+			<label>Stream/Channel to Monitor</label>
+			<input class="w3-input" type="text" id="channel">
+		</p>
+		<p>
+			<button class="w3-button w3-green" id="startBtn" disabled>Start</button>
+			<button class="w3-button w3-red" id="stopBtn" disabled>Stop</button>
+		</p>
 	</form>
-	<p>
-		<button class="w3-button w3-green" id="startBtn" disabled>Start</button>
-		<button class="w3-button w3-red" id="stopBtn" disabled>Stop</button>
-	</p>
-	<div class="w3-cell w3-mobile">
-		<div class="w3-card-4 w3-margin-right w3-margin-bottom" style="min-width:340px">
+
+	<div class="w3-left w3-card-4 w3-margin-right w3-margin-bottom">
+		<form id="statusVoice">
 			<div class="w3-container w3-theme-d3">
 				<h3>Stream/Channel Status Voice</h3>
 			</div>
-			<form id="statusVoice">
 			<div class="w3-container">
 				<p><label>Voice</label>
 				<select class="w3-input w3-select" name="voice"></select></p>
@@ -90,15 +96,14 @@
 				<input class="w3-input" type="range" min="0" max="2" step="0.1" value="1" name="pitch"></p>
 			</div>
 			<button class="w3-button w3-theme w3-block" type="submit" value="Submit" disabled>Test Status Voice</button>
-			</form>
-		</div>
+		</form>
 	</div>
-	<div class="w3-cell w3-mobile">
-		<div class="w3-card-4 w3-margin-right w3-margin-bottom" style="min-width:340px">
+	<div class="w3-left w3-card-4 w3-margin-right w3-margin-bottom">
+		<form name="chatVoice">
 			<div class="w3-container w3-theme-d3">
 				<h3>Chat Message Voice</h3>
 			</div>
-			<form name="chatVoice">
+			
 			<div class="w3-container">
 				<p><label>Voice</label>
 				<select class="w3-input w3-select" name="voice"></select></p>
@@ -110,9 +115,7 @@
 				<input class="w3-input" type="range" min="0" max="2" step="0.1" value="1" name="pitch"></p>
 			</div>
 			<button class="w3-button w3-theme w3-block" type="submit" value="Submit" disabled>Test Chat Voice</button>
-			</form>
-		</div>
-	</div>
+		</form>
 	</div>
 </body>
 </html>
