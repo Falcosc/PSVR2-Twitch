@@ -36,7 +36,7 @@ form {
 	</div>
 	<script>
 	function displayError(source, lineno, colno, error, stack){
-		const file = source.replace(/.*\//,'/').replace(/[?#].*/,'');
+		const file = source?.replace(/.*\//,'/').replace(/[?#].*/,'');
 		const time = (new Date()).toLocaleTimeString();
 		const errorLine = document.querySelector("#errorLine").content.cloneNode(true);
 		let span = errorLine.querySelectorAll("span");
@@ -46,10 +46,10 @@ form {
 		document.querySelector("#lastError").style.display = 'block';
 	}
 	window.onerror = (event, source, lineno, colno, error) => {
-		displayError(source, lineno, colno, error, error.stack);
+		displayError(source, lineno, colno, error, error?.stack);
 	}
 	window.addEventListener("unhandledrejection", (event) => {
-		displayError(event.reason.fileName, event.reason.lineNumber, event.reason.columnNumber, event.reason.message, event.reason.stack);
+		displayError(event?.reason?.fileName, event?.reason?.lineNumber, event?.reason?.columnNumber, event?.reason?.message, event?.reason?.stack);
 	});
 	</script>
 	<div class="w3-panel w3-pale-yellow w3-border w3-small">
