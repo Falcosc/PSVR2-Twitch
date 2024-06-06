@@ -8,6 +8,8 @@ let lastStatusSpeekTime = 0;
 let lastSpeekTime = 0; 
 let lastUserCount = 0;
 let lastStreamStatus = undefined;
+let voiceOrder;
+const voiceDetails = new Map();
 
 function loadSettings() {
 	document.querySelector('#accessToken').value = localStorage.getItem('accessToken');
@@ -45,12 +47,24 @@ function loadSettings() {
 function loadVoices() {
 	speechSynthesis.cancel();
 	voices = window.speechSynthesis.getVoices();
-	console.log(voices);
 	if(!voices?.length > 0){
 		return;
 	}
+
+	if(voiceOrder) {
+		populateVoicesSelects();
+	} else {
+		getVoiceOrder().then(populateVoicesSelects);
+	}
+}
+
+function populateVoicesSelects() {
 	let voiceSelects = document.querySelectorAll('select[name="voice"]');
 	voiceSelects.forEach((selectElement) => selectElement.innerHTML = '');
+	voices = voices.reduce((sorted, voice, index) => {
+		sorted[voiceOrder.indexOf(voice.name) + 1 || voiceOrder.length + index] = voice;
+		return sorted
+	}, []).filter(x => x);
 	voices.forEach((voice) => {
 		const option = document.createElement('option');
 		option.value = voice.name;
@@ -65,18 +79,42 @@ function loadVoices() {
 	//[...document.querySelector('#statusVoice [name=voice]').options].map(o => o.value).includes(voiceFromSettings) 
 }
 
+async function getVoiceOrder() {
+	const responses = await Promise.all([
+		fetch('https://hadriengardeur.github.io/web-speech-recommended-voices/json/' + navigator.language.substr(0,2) + '.json'),
+		fetch('https://hadriengardeur.github.io/web-speech-recommended-voices/json/en.json')
+	]);
+	voiceOrder = (await Promise.all(responses.map(parseVoiceOrder))).flat();
+};
+
+async function parseVoiceOrder(response) {
+	let voiceNames = [];
+	try {
+		const json = await response.json();
+		voiceDetails.set(json.language, json);
+		voiceNames = json.voices.reduce((vNames, voice) => {
+			vNames.push(voice.name); 
+			if(voice.altNames) vNames.push(...voice.altNames); 
+			return vNames
+		}, []);
+	} catch (error) {
+		console.warn(error);
+	}
+	return voiceNames;
+}
+
 async function getStreamStatus(channel){
-		const response = await fetch('https://api.twitch.tv/helix/streams?user_login=' + channel,{
-			headers: {
-				'Client-Id': CLIENT_ID,
-				Authorization: 'Bearer ' + document.querySelector('#accessToken').value
-			},
-			method: 'get'
-		});
-		const text = await response.text();
-		const json = JSON.parse(text);
-		console.log(json);
-		return json;
+	const response = await fetch('https://api.twitch.tv/helix/streams?user_login=' + channel,{
+		headers: {
+			'Client-Id': CLIENT_ID,
+			Authorization: 'Bearer ' + document.querySelector('#accessToken').value
+		},
+		method: 'get'
+	});
+	const text = await response.text();
+	const json = JSON.parse(text);
+	console.log(json);
+	return json;
 }
 
 function checkStreamStatus() {
@@ -197,27 +235,26 @@ function stop(e){
 }
 
 function testStatusVoice(e){
-	e.submitter.disabled=true;
+	e.submitter.disabled = true;
 	const formData = new FormData(e.target);
 	speak('Stream Status', formData);
 	getStreamStatus(document.querySelector('#channel').value).then(result => {
 		let statusMessage = '';
 		if(result?.type=='live') {
-			statusMessage ='live with ' + result?.viewer_count + ' Viewers';
+			statusMessage = 'live with ' + result?.viewer_count + ' Viewers';
 		} else {
-			statusMessage ='offline';
+			statusMessage = 'offline';
 		}
-		speak(statusMessage, formData, () => e.submitter.disabled=false);
+		speak(statusMessage, formData, () => e.submitter.disabled = false);
 	});
 
 	return false;
 }
 
 function testChatVoice(e){
-	e.submitter.disabled=true;
-	speak('PS VR 2 Twitch Chat', new FormData(e.target), function () {
-		e.submitter.disabled=false;
-	});
+	e.submitter.disabled = true;
+	const msg = voiceDetails.get(navigator.language.substr(0,2))?.testUtterance || 'PS VR 2 Twitch Chat';
+	speak(msg, new FormData(e.target), () => e.submitter.disabled = false);
 	return false;
 }
 
@@ -229,10 +266,12 @@ function speak(msg, formData, onEnd) {
 
 		utterThis.onend = onEnd;
 
-		utterThis.onerror = function (event) {
-			console.error('SpeechSynthesisUtterance.onerror');
+		utterThis.onerror = (event) => {
+			console.error(event);
+			self.reportError(new Error('Speech error: ' + event.error));
+			if(onEnd) onEnd();
 		};
-
+		
 		const voiceName = formData.get('voice');
 
 		utterThis.voice = voices.find(voice => {return voice.name == voiceName});
