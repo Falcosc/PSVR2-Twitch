@@ -14,6 +14,9 @@
 form {
 	width:340px;
 }
+input[type=range] {
+	width:100%;
+}
 </style>
 <script type="text/javascript" src="scripts/tmi.js"></script>
 <script type="text/javascript" src="scripts/main.js"></script>
@@ -89,11 +92,11 @@ form {
 				<p><label>Voice</label>
 				<select class="w3-input w3-select" name="voice"></select></p>
 				<p><label>Volume</label>
-				<input class="w3-input" type="range" min="0" max="1" step="0.01" value="1" name="volume"></p>
+				<input type="range" min="0" max="1" step="0.01" value="1" name="volume"></p>
 				<p><label>Rate</label>
-				<input class="w3-input" type="range" min="0.7" max="2" step="0.1" value="1" name="rate"></p>
+				<input type="range" min="0.7" max="2" step="0.1" value="1" name="rate"></p>
 				<p><label>Pitch</label>
-				<input class="w3-input" type="range" min="0" max="2" step="0.1" value="1" name="pitch"></p>
+				<input type="range" min="0" max="2" step="0.1" value="1" name="pitch"></p>
 			</div>
 			<button class="w3-button w3-theme w3-block" type="submit" value="Submit" disabled>Test Status Voice</button>
 		</form>
@@ -108,11 +111,11 @@ form {
 				<p><label>Voice</label>
 				<select class="w3-input w3-select" name="voice"></select></p>
 				<p><label>Volume</label>
-				<input class="w3-input" type="range" min="0" max="1" step="0.01" value="1" name="volume"></p>
+				<input type="range" min="0" max="1" step="0.01" value="1" name="volume"></p>
 				<p><label>Rate</label>
-				<input class="w3-input" type="range" min="0.7" max="2" step="0.1" value="1" name="rate"></p>
+				<input type="range" min="0.7" max="2" step="0.1" value="1" name="rate"></p>
 				<p><label>Pitch</label>
-				<input class="w3-input" type="range" min="0" max="2" step="0.1" value="1" name="pitch"></p>
+				<input type="range" min="0" max="2" step="0.1" value="1" name="pitch"></p>
 			</div>
 			<button class="w3-button w3-theme w3-block" type="submit" value="Submit" disabled>Test Chat Voice</button>
 		</form>

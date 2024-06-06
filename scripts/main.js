@@ -45,9 +45,10 @@ function loadSettings() {
 }
 
 function loadVoices() {
-	speechSynthesis.cancel();
+	const oldVoiceCount = voices?.length;
 	voices = window.speechSynthesis.getVoices();
-	if(!voices?.length > 0){
+	const newVoiceCount = voices?.length;
+	if(!newVoiceCount > 0 || oldVoiceCount == newVoiceCount) {
 		return;
 	}
 
