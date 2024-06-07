@@ -12,28 +12,29 @@ let voiceOrder;
 const voiceDetails = new Map();
 
 function loadSettings() {
-	document.querySelector('#accessToken').value = localStorage.getItem('accessToken');
-	document.querySelector('#displayName').value = localStorage.getItem('displayName');
 	document.querySelector('#channel').value = localStorage.getItem('channel');
+	document.querySelector('#startBtn').onclick = start;
+	document.querySelector('#stopBtn').onclick = stop;
+	if(localStorage.getItem('accessToken')) {
+		document.querySelector('#authorizeLabel').innerHTML = '&#x27F3 Update Connection'
+		document.querySelector('#channel').removeAttribute('disabled');
+		document.querySelector('#startBtn').removeAttribute('disabled');
+	}
 
 	if (document.location.hash) {
 		var parsedHash = new URLSearchParams(window.location.hash.substr(1));
 		history.replaceState({}, '',  window.location.pathname); //hide the accessToken from accidental screen shares
 		if (parsedHash.get('access_token')) {
-			let accessToken = parsedHash.get('access_token');
-			document.querySelector('#accessToken').value = accessToken;
-			prefillNameAndChannel(accessToken)
+			prefillNameAndChannel(parsedHash.get('access_token'))
 		}
 	}
-	
-	document.querySelector('#startBtn').onclick=start;
-	document.querySelector('#startBtn').removeAttribute('disabled');
-	document.querySelector('#stopBtn').onclick=stop;
+
 	
 	loadVoices();
 	if (window.speechSynthesis.onvoiceschanged !== undefined) {
 		window.speechSynthesis.onvoiceschanged = loadVoices;
 	}
+	window.addEventListener("beforeunload", preventPageLeave);
 
 	const statusVoiceForm = document.querySelector('#statusVoice');
 	statusVoiceForm.onsubmit = testStatusVoice;
@@ -42,6 +43,10 @@ function loadSettings() {
 		chatVoice.onsubmit = testChatVoice;
 		chatVoice.getElementsByTagName('button')[0].removeAttribute('disabled')
 	});
+}
+
+function preventPageLeave(e) {
+	if(client?.ws?.readyState == 1 && !document.querySelector('#stopBtn').disabled) e.preventDefault();
 }
 
 function loadVoices() {
@@ -108,7 +113,7 @@ async function getStreamStatus(channel){
 	const response = await fetch('https://api.twitch.tv/helix/streams?user_login=' + channel,{
 		headers: {
 			'Client-Id': CLIENT_ID,
-			Authorization: 'Bearer ' + document.querySelector('#accessToken').value
+			Authorization: 'Bearer ' + localStorage.getItem('accessToken')
 		},
 		method: 'get'
 	});
@@ -167,11 +172,12 @@ function prefillNameAndChannel(accessToken){
 		return c.json()
 	}).then(function(j) {
 		console.log(j);
-		let displayNameInput = document.querySelector('#displayName');
+		localStorage.setItem('accessToken', accessToken);
+		document.querySelector('#authorizeLabel').innerHTML = '&#x27F3 Update Connection'
+		document.querySelector('#channel').removeAttribute('disabled');
+		document.querySelector('#startBtn').removeAttribute('disabled');
+		localStorage.setItem('displayName', j.data[0].display_name);
 		let channelInput = document.querySelector('#channel');
-		if(!displayNameInput.value) {
-			displayNameInput.value = j.data[0].display_name;
-		}
 		if(!channelInput.value) {
 			channelInput.value = j.data[0].login;
 		}
@@ -185,10 +191,6 @@ function start(e){
 	document.querySelector('#stopBtn').removeAttribute('disabled');
 	document.querySelectorAll('#connectionForm input').forEach(e => e.disabled = true);
 	
-	let accessToken = document.querySelector('#accessToken').value;
-	localStorage.setItem('accessToken', accessToken);
-	let displayName = document.querySelector('#displayName').value;
-	localStorage.setItem('displayName', displayName);
 	let channel = document.querySelector('#channel').value;
 	localStorage.setItem('channel', channel);
 	
@@ -199,8 +201,8 @@ function start(e){
 		},
 		connection: {reconnect: true},
 		identity: {
-			username: displayName,
-			password: 'oauth:' + accessToken
+			username: localStorage.getItem('displayName'),
+			password: 'oauth:' + localStorage.getItem('accessToken')
 		},
 		channels: [channel]
 	});
@@ -232,6 +234,7 @@ function start(e){
 
 function stop(e){
 	e.target.disabled=true;
+	client.disconnect();
 	window.location.reload();
 }
 
