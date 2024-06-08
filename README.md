@@ -3,22 +3,32 @@
 Everything which is not adjustable in existing text to speech solutions need to be custom coded. That's why this tool was created
 
 Everybody can directly use the Web Version in your favorite Web Browser:
-
 [PSVR2-Twitch Chat](https://falcosc.github.io/PSVR2-Twitch/)
+
+[![PSVR2-Twitch Chat](preview.png)
 
 # Usage suggestions
 Since you don't want this audio to feed into your Stream, a secondary device is the easiest way to consume the audio.
 
-During playing around with the voices, I found out that Microsoft included a huge amount of Voices in Microsoft Edge to Windows.
+During playing around with the voices, I found out that Microsoft included a huge amount of Voices in Microsoft Edge for Windows.
 This will become useful as soon as we add the feature of rotating voices to differentiate between chat users.
-Default voices in Safari are the worst I have heard to far, you should install Enhanced/Premium voices on Apple devices to use it.
+Multilingual Voices are useful as well, Microsoft Edge has some Multilingual Online Voices which automatically detect and pronounce texts from multiple languages.
 
-If you don't want to wait until your idea gets merged or if you just want to try out some script adjustments, you can just download the files and launch it from your file system instead.
+## Avoid bad voice quality
+Voices are sorted based on [recommendations](https://github.com/HadrienGardeur/web-speech-recommended-voices). However, on some devices you don't get good quality voices.
+For example, default voices in Safari are the worst I have heard to far. You can install Enhanced/Premium voices on Apple devices, but these can only be selected if you avoid Safari and even worse, not possible on iOS at all [source](https://github.com/HadrienGardeur/web-speech-recommended-voices/issues/19) ([give it a Boost at Apple if you don't like this limitation](https://developer.apple.com/forums/thread/723503))
 
-# Nothing will be stored online
-The tool uses your browser storage to save the settings. All communications happen on your device over JS. Some browsers use online services for text to speech. For that reason, this tool only says public chat messages or public server stats and does not consume private messages.
+## Works without web server
+If you don't want to wait until your improvement ideas gets merged into the GitHub page or if you just want to try out some script adjustments, you can just download the files and launch it from your file system instead.
 
-# Why PSVR2
+## Nothing will be stored online
+The tool uses your browser storage to save the settings. All communications happen on your device over JS. Some browsers use online services for text to speech. For that reason, this tool only says public chat messages or public server stats and does not consume private messages by default.
+
+# Why
+
+Who is needing this?
+
+## Why PSVR2
 In contrast to any other VR solution, missing features and customization on PlayStation does compromise the enjoyment so much that I needed to create a custom solution.
 - PSVR2 still has no support for chat overlay
 - You can't get the PS5 internet browser open in parallel to your game in VR
@@ -26,14 +36,14 @@ In contrast to any other VR solution, missing features and customization on Play
 - You can't mod games on PlayStation 5
 - You can't develop extensions for anything in the PlayStation environment to get any help in VR
 
-# Not needed for other VR solutions
+## Not needed for other VR solutions
 Any other product I know either already has better integrations or provide the ability to extend the capabilities.
 I don't recommend using this tool for other VR solutions. If you are not on PSVR2 I suggest checking for existing solutions even if there is nothing out of the box. Any other VR Solution has lots of abilities to get extended, so it is just a matter of time until you find a way better twitch chat solution for your VR system.
 
-# Why Text To Speech
+## Why Text To Speech
 text to speech is the worst solution for public chat. But because PlayStation is a closed system without any abilities to be extended, audio is the only interface which can be used to get information while in VR.
 
-# What is different to PS5 Text to Speech or other TTS Solutions?
+## What is different to PS5 Text to Speech or other TTS Solutions?
 This tool tries to mimic the interaction with an automatic scrolling chat. 
 Here are some notes about how I consume chat, these are topics which are missing in PS5 Twitch TTS integration and other TTS tools
 - don't constantly read chat messages
@@ -47,7 +57,11 @@ Here are some notes about how I consume chat, these are topics which are missing
 As long as I can't get these behaviors adapted to TTS I need to add them to my tool in the order of my personal need.
 I still hope that Sony will extend PSVR2 in the future, so I only focus on the most annoying topics first.
 
-# How can we mimic how humans consume with chat messages?
+# What is the target
+
+The perfect solution would have all the benefits of having a colorful scrolling chat on a secondary monitor. But on audio only.
+
+## How can we mimic how humans consume with chat messages?
 These are my ideas so far, some of them are already implemented:
 - skip chat messages and only read the latest one to interact with game state relevant fresh live comments
 - force x seconds long pauses after y seconds of speech to steer the balance of game consumption with chat consumption
@@ -59,7 +73,7 @@ These are my ideas so far, some of them are already implemented:
 - skip equal messages
 - use natural language processing frameworks to score the content of a message to skip less meaningful messages
 
-# Which of these features are currently implemented?
+## Which of these features are currently implemented?
 - skip chat messages and only read the latest one to interact with game state relevant fresh live comments
 - notification if my streaming system stops working and the stream goes offline (without viewers nobody will inform you if your recording breaks) checks status every 5 seconds
 - audio ping every x minutes in periods of silence to notify that everything is still working
@@ -71,7 +85,7 @@ https://github.com/Falcosc/PSVR2-Twitch/discussions
 
 If more people like your ideas and wishes, it makes more sense to work on them together.
 
-# What will be implemented next?
+## What will be implemented next?
 It depends on your feedback. Currently, I only work on my needs which are tiny since I only stream to be able to save funny moments without the hassle of managing large amounts of data at home and without the trouble of how to share these funny moments with my friends.
 Since I like coding, it only takes a cool idea and seeing how much you enjoy the process of using it to add some easy features for your needs into this tool.
 But be aware, it will get obsolete as soon as Sony adds a real chat in PSVR2. So let's focus on things we need today and don't waste time on things which might be interested in the future.
