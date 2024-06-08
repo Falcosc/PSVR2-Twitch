@@ -217,7 +217,7 @@ function start(e){
 
 	client.on('message', (channel, user, message, self) => {
 		if (self) return;
-		if (user['message-type'] === 'chat') {
+		if (user['message-type'] === 'chat' || user['message-type'] === 'action') {
 			if (window.speechSynthesis.speaking) {
 				console.error('SpeechSynthesisUtterance.speaking, skipped message: ' + message);
 			} else {
@@ -228,6 +228,24 @@ function start(e){
 			}
 		}
 	});
+	
+	client.on('cheer', (target, userstate, message) => {
+		message = removeEmojisExceptFirst(message);
+		message = `cheer ${userstate.bits} bits from ${userstate.username}: "${message}"`;
+		speak(message, new FormData(chatVoice), function () {
+			console.log('message was spoken: ' + message);
+		});
+	});
+	
+	client.on("resub", (channel, username, months, message, userstate, methods) => {
+		let cumulativeMonths = ~~userstate["msg-param-cumulative-months"];
+		message = removeEmojisExceptFirst(message);
+		message = `resub ${cumulativeMonths} month from ${username}: "${message}"`;
+		speak(message, new FormData(chatVoice), function () {
+			console.log('message was spoken: ' + message);
+		});
+});
+	
 	checkStreamStatus();
 	setInterval(checkStreamStatus, 5000);
 }
