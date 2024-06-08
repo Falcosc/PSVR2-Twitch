@@ -307,14 +307,14 @@ function removeEmotesExceptFirst(message, emotes) {
 	if (!emotes) {
 		return message;
 	}
-	let newMessage = [...message];
+	let newMessage = [...message]; //unicode aware split
 	Object.values(emotes)
 		.flat()
-		.sort()
-		.slice(1) //only keep first emote
-		.reverse()
 		.map((e) => e.split('-').map(Number))
-		.forEach((emoteIndices) => newMessage.splice(emoteIndices[0], emoteIndices[1]+1 - emoteIndices[0]));
+		.sort((a,b) => a[0] > b[0])
+		.slice(1) //remove any emote except index 0
+		.reverse()
+		.forEach((emoteIndices) => newMessage.splice(emoteIndices[0], emoteIndices[1] + 1 - emoteIndices[0]));
 	return newMessage.join('');
 }
 
