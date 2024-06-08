@@ -3,9 +3,9 @@
 Everything which is not adjustable in existing text to speech solutions need to be custom coded. That's why this tool was created
 
 Everybody can directly use the Web Version in your favorite Web Browser:
-[PSVR2-Twitch Chat](https://falcosc.github.io/PSVR2-Twitch/)
+[Start PSVR2-Twitch Chat](https://falcosc.github.io/PSVR2-Twitch/)
 
-[![PSVR2-Twitch Chat](preview.png)
+[![PSVR2-Twitch Chat](preview.png)](https://falcosc.github.io/PSVR2-Twitch/)
 
 # Usage suggestions
 Since you don't want this audio to feed into your Stream, a secondary device is the easiest way to consume the audio.
