@@ -210,10 +210,6 @@ function start(e){
 	client.connect().catch(console.error);
 
 	const chatVoice = document.querySelectorAll('form[name="chatVoice"]')[0];
-	
-	//TODO on "cheer" get bits
-	//TODO on "subgift" get gift subs
-	//TODO on "submysterygift" get gift subs
 
 	client.on('message', (channel, user, message, self) => {
 		if (self) return;
@@ -221,6 +217,7 @@ function start(e){
 			if (window.speechSynthesis.speaking) {
 				console.error('SpeechSynthesisUtterance.speaking, skipped message: ' + message);
 			} else {
+				message = removeEmotesExceptFirst(message, user.emotes);
 				message = removeEmojisExceptFirst(message);
 				speak(message, new FormData(chatVoice), function () {
 					console.log('message was spoken: ' + message);
@@ -230,6 +227,7 @@ function start(e){
 	});
 	
 	client.on('cheer', (target, userstate, message) => {
+		message = removeEmotesExceptFirst(message, userstate.emotes);
 		message = removeEmojisExceptFirst(message);
 		message = `cheer ${userstate.bits} bits from ${userstate.username}: "${message}"`;
 		speak(message, new FormData(chatVoice), function () {
@@ -239,6 +237,7 @@ function start(e){
 	
 	client.on("resub", (channel, username, months, message, userstate, methods) => {
 		let cumulativeMonths = ~~userstate["msg-param-cumulative-months"];
+		message = removeEmotesExceptFirst(message, userstate.emotes);
 		message = removeEmojisExceptFirst(message);
 		message = `resub ${cumulativeMonths} month from ${username}: "${message}"`;
 		speak(message, new FormData(chatVoice), function () {
@@ -304,9 +303,24 @@ function speak(msg, formData, onEnd) {
 	}
 }
 
+function removeEmotesExceptFirst(message, emotes) {
+	if (!emotes) {
+		return message;
+	}
+	let newMessage = [...message];
+	Object.values(emotes)
+		.flat()
+		.sort()
+		.slice(1) //only keep first emote
+		.reverse()
+		.map((e) => e.split('-').map(Number))
+		.forEach((emoteIndices) => newMessage.splice(emoteIndices[0], emoteIndices[1]+1 - emoteIndices[0]));
+	return newMessage.join('');
+}
+
 function removeEmojisExceptFirst(string) {
 	let alreadyFound = false;
-	return string.replace(/\p{Extended_Pictographic}/gu, match => {
+	return string.replace(/\p{Extended_Pictographic}(\u200d\p{Extended_Pictographic})*/gu, match => {
 		if (alreadyFound) {
 			return ''
 		} else {
