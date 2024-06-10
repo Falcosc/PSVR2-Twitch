@@ -134,18 +134,18 @@ function checkStreamStatus() {
 			const repeatStreamStatusAfterMS = newStreamStatus=='live' ? repeatStreamStatusLiveAfterMS : repeatStreamStatusOfflineAfterMS;
 			if(lastStreamStatus != newStreamStatus) {
 				if(newStreamStatus=='live') {
-					statusMessage ='Stream got live. ' + newUserCount + ' Viewers';
+					statusMessage = 'Stream got live. ' + newUserCount + ' Viewers';
 				} else {
-					statusMessage ='Stream got offline';
+					statusMessage = 'Stream got offline';
 				}
 			}
 			if(newTime - lastStatusSpeekTime > repeatStreamStatusAfterMS) {
 				if(newStreamStatus=='live') {
 					if(newTime - lastSpeekTime > repeatStreamStatusAfterMS) {
-						statusMessage += newUserCount + ' Viewers'; //if silent, repeat viewer count as "still alive" ping
+						statusMessage = newUserCount + ' Viewers'; //if silent, repeat viewer count as "still alive" ping
 					}
 				} else {
-					statusMessage ='Stream is still offline'; //repeat still offline even if chat is talking
+					statusMessage = 'Stream is still offline'; //repeat still offline even if chat is talking
 				}
 			}
 			lastStreamStatus = newStreamStatus;
@@ -191,13 +191,14 @@ function start(e){
 	e.target.disabled=true;
 	document.querySelector('#stopBtn').removeAttribute('disabled');
 	document.querySelectorAll('#connectionForm input').forEach(e => e.disabled = true);
-	
-	checkStreamStatus();
-	setInterval(checkStreamStatus, 5000);
-	
+
 	let channel = document.querySelector('#channel').value;
 	localStorage.setItem('channel', channel);
-	
+
+	speak('Connect to ' + channel, new FormData(document.querySelector('#statusVoice'))); //iOS needs speak before promise/fetch/Websocket
+	checkStreamStatus();
+	setInterval(checkStreamStatus, 5000);
+
 	client = new tmi.Client({
 		options: {
 			debug: true,
@@ -320,7 +321,7 @@ function removeEmotesExceptFirst(message, emotes) {
 }
 
 function removeEmojisExceptFirst(string) {
-	if (!emotes) {
+	if (!string) {
 		return message;
 	}
 	let alreadyFound = false;
