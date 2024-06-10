@@ -1,5 +1,5 @@
 const CLIENT_ID = '368mzno8zop311dlixwz4v7qvp0dgz'; /* keep this in sync with hardcoded oauth2/authorize links */
-const repeatStreamStatusLiveAfterMS = 1000 * 60 * 5; //5min
+const repeatStreamStatusLiveAfterMS = 1000 * 60 * 3; //5min
 const repeatStreamStatusOfflineAfterMS = 1000 * 60 * 1; //1min
 
 let client;
@@ -155,6 +155,7 @@ function checkStreamStatus() {
 			self.reportError(new Error(`Query for ${channel} result: ` + JSON.stringify(result)));
 		}
 		if(statusMessage) {
+			console.log(statusMessage);
 			speak(statusMessage, new FormData(document.querySelector('#statusVoice')), () => lastStatusSpeekTime = newTime);
 		}
 	});
@@ -191,6 +192,9 @@ function start(e){
 	document.querySelector('#stopBtn').removeAttribute('disabled');
 	document.querySelectorAll('#connectionForm input').forEach(e => e.disabled = true);
 	
+	checkStreamStatus();
+	setInterval(checkStreamStatus, 5000);
+	
 	let channel = document.querySelector('#channel').value;
 	localStorage.setItem('channel', channel);
 	
@@ -215,7 +219,7 @@ function start(e){
 		if (self) return;
 		if (user['message-type'] === 'chat' || user['message-type'] === 'action') {
 			if (window.speechSynthesis.speaking) {
-				console.error('SpeechSynthesisUtterance.speaking, skipped message: ' + message);
+				console.warn('SpeechSynthesisUtterance.speaking, skipped message: ' + message);
 			} else {
 				message = removeEmotesExceptFirst(message, user.emotes);
 				message = removeEmojisExceptFirst(message);
@@ -243,10 +247,7 @@ function start(e){
 		speak(message, new FormData(chatVoice), function () {
 			console.log('message was spoken: ' + message);
 		});
-});
-	
-	checkStreamStatus();
-	setInterval(checkStreamStatus, 5000);
+	});
 }
 
 function stop(e){
@@ -261,8 +262,8 @@ function testStatusVoice(e){
 	speak('Stream Status', formData);
 	getStreamStatus(document.querySelector('#channel').value).then(result => {
 		let statusMessage = '';
-		if(result?.type=='live') {
-			statusMessage = 'live with ' + result?.viewer_count + ' Viewers';
+		if(result?.data?.[0]?.type=='live') {
+			statusMessage = 'live with ' + result?.data?.[0]?.viewer_count + ' Viewers';
 		} else {
 			statusMessage = 'offline';
 		}
@@ -319,6 +320,9 @@ function removeEmotesExceptFirst(message, emotes) {
 }
 
 function removeEmojisExceptFirst(string) {
+	if (!emotes) {
+		return message;
+	}
 	let alreadyFound = false;
 	return string.replace(/\p{Extended_Pictographic}(\u200d\p{Extended_Pictographic})*/gu, match => {
 		if (alreadyFound) {
