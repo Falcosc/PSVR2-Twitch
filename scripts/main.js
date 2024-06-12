@@ -29,8 +29,16 @@ function loadSettings() {
 		}
 	}
 
-	
-	loadVoices();
+	if(navigator.userAgent.includes('EdgA')){
+		const androidEdgeHack = document.querySelector('#androidEdgeHack');
+		androidEdgeHack.removeAttribute('hidden');
+		const androidEdgeHackBtn = androidEdgeHack.querySelector('button').onclick = () => {
+			androidEdgeHack.setAttribute('hidden', true);
+			loadVoices();
+		};
+	} else {
+		loadVoices();
+	}
 	if (window.speechSynthesis.onvoiceschanged !== undefined) {
 		window.speechSynthesis.onvoiceschanged = loadVoices;
 	}
@@ -38,10 +46,10 @@ function loadSettings() {
 
 	const statusVoiceForm = document.querySelector('#statusVoice');
 	statusVoiceForm.onsubmit = testStatusVoice;
-	statusVoiceForm.getElementsByTagName('button')[0].removeAttribute('disabled')
+	statusVoiceForm.getElementsByTagName('button')[0].removeAttribute('disabled');
 	document.querySelectorAll('form[name="chatVoice"]').forEach((chatVoiceForm) => {
 		chatVoice.onsubmit = testChatVoice;
-		chatVoice.getElementsByTagName('button')[0].removeAttribute('disabled')
+		chatVoice.getElementsByTagName('button')[0].removeAttribute('disabled');
 	});
 }
 
