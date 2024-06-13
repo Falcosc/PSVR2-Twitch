@@ -17,6 +17,9 @@ form {
 input[type=range] {
 	width:100%;
 }
+svg {
+	vertical-align: middle
+}
 </style>
 <script type="text/javascript" src="scripts/tmi.js"></script>
 <script type="text/javascript" src="scripts/main.js"></script>
@@ -70,7 +73,10 @@ input[type=range] {
 		<a href="https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=368mzno8zop311dlixwz4v7qvp0dgz&redirect_uri=https://falcosc.github.io/PSVR2-Twitch/&scope=chat:read&force_verify=true"
 			class="w3-button w3-deep-purple w3-large" style="width:100%">
 			<span id="authorizeLabel">&#x260D; Connect</span>
-			<img src="https://www.twitch.tv/favicon.ico" width="24px" alt="Twitch">
+			<svg xmlns="http://www.w3.org/2000/svg" height="24" fill="currentColor" viewBox="0 0 16 16">
+				<path d="M3.857 0 1 2.857v10.286h3.429V16l2.857-2.857H9.57L14.714 8V0zm9.714 7.429-2.285 2.285H9l-2 2v-2H4.429V1.143h9.142z"/>
+				<path d="M11.857 3.143h-1.143V6.57h1.143zm-3.143 0H7.571V6.57h1.143z"/>
+			</svg>
 		</a>
 		<p>
 			<label>Stream/Channel to Monitor</label>
