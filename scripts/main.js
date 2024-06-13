@@ -29,7 +29,7 @@ function loadSettings() {
 		}
 	}
 
-	if(navigator.userAgent.includes('EdgA')){
+	if(localStorage.getItem('lastGetVoiceListBugAgent') == navigator.userAgent) {
 		const androidEdgeHack = document.querySelector('#androidEdgeHack');
 		androidEdgeHack.removeAttribute('hidden');
 		const androidEdgeHackBtn = androidEdgeHack.querySelector('button').onclick = () => {
@@ -61,6 +61,13 @@ function loadVoices() {
 	const oldVoiceCount = voices?.length;
 	voices = window.speechSynthesis.getVoices();
 	const newVoiceCount = voices?.length;
+	if(newVoiceCount === 0 && navigator.userAgent.includes('EdgA')) {
+		localStorage.setItem('lastGetVoiceListBugAgent', navigator.userAgent);
+		window.location.reload(); //only a reload does unstuck the getVoices call
+	}
+	if (newVoiceCount > 0) {
+		document.querySelector('#androidEdgeHack').setAttribute('hidden', true); //hide the note if everthing is working
+	}
 	if(!newVoiceCount > 0 || oldVoiceCount == newVoiceCount) {
 		return;
 	}
