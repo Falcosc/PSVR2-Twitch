@@ -1,9 +1,10 @@
 const CLIENT_ID = '368mzno8zop311dlixwz4v7qvp0dgz'; /* keep this in sync with hardcoded oauth2/authorize links */
-const repeatStreamStatusLiveAfterMS = 1000 * 60 * 3; //5min
-const repeatStreamStatusOfflineAfterMS = 1000 * 60 * 1; //1min
+const repeatStreamStatusLiveAfterMS = 1000 * 60 * 2; //2min
+const repeatStreamStatusOfflineAfterMS = 1000 * 30; //30s
 
 let client;
 let voices;
+let wakeLock;
 let lastStatusSpeekTime = 0;
 let lastSpeekTime = 0; 
 let lastUserCount = 0;
@@ -42,6 +43,9 @@ function loadSettings() {
 	if (window.speechSynthesis.onvoiceschanged !== undefined) {
 		window.speechSynthesis.onvoiceschanged = loadVoices;
 	}
+	window.addEventListener('focus', pageLifecycleChange);
+	window.addEventListener('pageshow', pageLifecycleChange);
+	window.addEventListener('visibilitychange', pageLifecycleChange);
 	window.addEventListener("beforeunload", preventPageLeave);
 
 	const statusVoiceForm = document.querySelector('#statusVoice');
@@ -53,8 +57,12 @@ function loadSettings() {
 	});
 }
 
+function pageLifecycleChange() {
+	 if(client?.ws) requestWakeLock()
+}
+
 function preventPageLeave(e) {
-	if(client?.ws?.readyState == 1 && !document.querySelector('#stopBtn').disabled) e.preventDefault();
+	if(client?.ws && !document.querySelector('#stopBtn').disabled) e.preventDefault();
 }
 
 function loadVoices() {
@@ -202,6 +210,16 @@ function prefillNameAndChannel(accessToken){
 	});
 }
 
+async function requestWakeLock() {
+	try {
+		if(wakeLock?.released != false && !document.hidden) {
+			wakeLock = await navigator.wakeLock.request();
+		}
+	} catch (err) {
+		self.reportError(err);
+	}
+};
+
 function start(e){
 	e.target.disabled=true;
 	document.querySelector('#stopBtn').removeAttribute('disabled');
@@ -264,11 +282,13 @@ function start(e){
 			console.log('message was spoken: ' + message);
 		});
 	});
+	requestWakeLock();
 }
 
 function stop(e){
 	e.target.disabled=true;
 	client.disconnect();
+	wakeLock?.release();
 	window.location.reload();
 }
 
@@ -311,8 +331,7 @@ function speak(msg, formData, onEnd) {
 		};
 		
 		const voiceName = formData.get('voice');
-
-		utterThis.voice = voices.find(voice => {return voice.name == voiceName});
+		utterThis.voice = voices?.find(voice => {return voice.name == voiceName});
 		utterThis.volume = formData.get('volume');
 		utterThis.pitch = formData.get('pitch');
 		utterThis.rate = formData.get('rate');
