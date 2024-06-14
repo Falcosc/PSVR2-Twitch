@@ -2,6 +2,7 @@ const CLIENT_ID = '368mzno8zop311dlixwz4v7qvp0dgz'; /* keep this in sync with ha
 const repeatStreamStatusLiveAfterMS = 1000 * 60 * 2; //2min
 const repeatStreamStatusOfflineAfterMS = 1000 * 30; //30s
 
+let accessToken;
 let client;
 let voices;
 let wakeLock;
@@ -11,23 +12,22 @@ let lastUserCount = 0;
 let lastStreamStatus = undefined;
 let voiceOrder;
 const voiceDetails = new Map();
+let cheermoteRegex = generateCheermoteRegex();
+
+
+//todo repeat last text with mediaSession button
 
 function loadSettings() {
 	document.querySelector('#channel').value = localStorage.getItem('channel');
 	document.querySelector('#startBtn').onclick = start;
 	document.querySelector('#stopBtn').onclick = stop;
-	if(localStorage.getItem('accessToken')) {
-		document.querySelector('#authorizeLabel').innerHTML = '&#x27F3 Update Connection'
-		document.querySelector('#channel').removeAttribute('disabled');
-		document.querySelector('#startBtn').removeAttribute('disabled');
-	}
 
 	if (document.location.hash) {
 		var parsedHash = new URLSearchParams(window.location.hash.substr(1));
 		history.replaceState({}, '',  window.location.pathname); //hide the accessToken from accidental screen shares
-		if (parsedHash.get('access_token')) {
-			prefillNameAndChannel(parsedHash.get('access_token'))
-		}
+		validateAccessToken(parsedHash.get('access_token'));
+	} else {
+		validateAccessToken(localStorage.getItem('accessToken'));
 	}
 
 	if(localStorage.getItem('lastGetVoiceListBugAgent') == navigator.userAgent) {
@@ -46,7 +46,7 @@ function loadSettings() {
 	window.addEventListener('focus', pageLifecycleChange);
 	window.addEventListener('pageshow', pageLifecycleChange);
 	window.addEventListener('visibilitychange', pageLifecycleChange);
-	window.addEventListener("beforeunload", preventPageLeave);
+	window.addEventListener('beforeunload', preventPageLeave);
 
 	const statusVoiceForm = document.querySelector('#statusVoice');
 	statusVoiceForm.onsubmit = testStatusVoice;
@@ -132,26 +132,12 @@ async function parseVoiceOrder(response) {
 	return voiceNames;
 }
 
-async function getStreamStatus(channel){
-	const response = await fetch('https://api.twitch.tv/helix/streams?user_login=' + channel,{
-		headers: {
-			'Client-Id': CLIENT_ID,
-			Authorization: 'Bearer ' + localStorage.getItem('accessToken')
-		},
-		method: 'get'
-	});
-	const text = await response.text();
-	const json = JSON.parse(text);
-	console.log(json);
-	return json;
-}
-
-function checkStreamStatus() {
+function checkStreamStatus(onEnd) {
 	const channel = document.querySelector('#channel').value;
-	getStreamStatus(channel).then(result => {
+	return getHelixJSON('streams?user_login=' + channel).then(result => {
 		const newTime = new Date();
 		let statusMessage = '';
-		if(result.data) {
+		if(result?.data) {
 			const newStreamStatus = result.data[0]?.type;
 			const newUserCount = result.data[0]?.viewer_count;
 			const repeatStreamStatusAfterMS = newStreamStatus=='live' ? repeatStreamStatusLiveAfterMS : repeatStreamStatusOfflineAfterMS;
@@ -179,35 +165,66 @@ function checkStreamStatus() {
 		}
 		if(statusMessage) {
 			console.log(statusMessage);
-			speak(statusMessage, new FormData(document.querySelector('#statusVoice')), () => lastStatusSpeekTime = newTime);
+			speak(statusMessage, new FormData(document.querySelector('#statusVoice')), () => {
+				lastStatusSpeekTime = newTime; 
+				if(typeof onEnd === 'function') onEnd();
+			});
 		}
 	});
 } 
 
-function prefillNameAndChannel(accessToken){
-	fetch('https://api.twitch.tv/helix/users',{
-		headers: {
-			'Client-Id': CLIENT_ID,
-			Authorization: 'Bearer ' + accessToken
-		},
-		method: 'get'
-	}
-	).then(function(c) {
-		return c.json()
-	}).then(function(j) {
-		console.log(j);
-		localStorage.setItem('accessToken', accessToken);
-		document.querySelector('#authorizeLabel').innerHTML = '&#x27F3 Update Connection'
-		document.querySelector('#channel').removeAttribute('disabled');
-		document.querySelector('#startBtn').removeAttribute('disabled');
-		localStorage.setItem('displayName', j.data[0].display_name);
-		let channelInput = document.querySelector('#channel');
-		if(!channelInput.value) {
-			channelInput.value = j.data[0].login;
+async function getHelixJSON(path) {
+	try {
+		const response = await fetch('https://api.twitch.tv/helix/' + path,{
+			headers: {
+				'Client-Id': CLIENT_ID,
+				Authorization: 'Bearer ' + accessToken
+			},
+			method: 'get'
+		});
+		let content;
+		try {
+			content = await response.json();
+		} catch (error) {
+			content = await response.text();
 		}
-	}).catch(function(err) {
+		if(response.ok) {
+			return content;
+		} else {
+			self.reportError(new Error(([response.statusText || response.status, JSON.stringify(content)].join(': '))));
+		}
+	} catch (error) {
 		self.reportError(new Error(err));
-	});
+	}
+}
+
+function validateAccessToken(token) {
+	if(!token) {
+		return;
+	}
+	accessToken = token;
+	getHelixJSON('users').then(function(j) {
+		console.log(j);
+		const displayName = j?.data?.[0]?.display_name;
+		if(displayName) {
+			localStorage.setItem('accessToken', accessToken);
+			document.querySelector('#authorizeLabel').innerHTML = '&#x27F3 Update Connection'
+			document.querySelector('#channel').removeAttribute('disabled');
+			document.querySelector('#startBtn').removeAttribute('disabled');
+			localStorage.setItem('displayName', displayName);
+			let channelInput = document.querySelector('#channel');
+			if(!channelInput.value) {
+				channelInput.value = j.data[0].login;
+			}
+		}
+	})
+}
+
+function generateCheermoteRegex(customList) {
+	const defaultList = ['Cheer','DoodleCheer','BibleThump','cheerwhal','Corgo','Scoops','uni','ShowLove','Party','SeemsGood','Pride',
+		'Kappa','FrankerZ','HeyGuys','DansGame','EleGiggle','TriHard','Kreygasm','4Head','SwiftRage','NotLikeThis','FailFish','VoHiYo',
+		'PJSalt','MrDestructoid','bday','RIPCheer','Shamrock','BitBoss','Streamlabs','Muxy','HolidayCheer','Goal','Anon','Charity' ];
+	return new RegExp(`\\b(${(customList ?? defaultList).join('|')})(\\d+)\\b`, 'giu');
 }
 
 async function requestWakeLock() {
@@ -249,13 +266,24 @@ function start(e){
 
 	const chatVoice = document.querySelectorAll('form[name="chatVoice"]')[0];
 
+	client.on('roomstate', (channel, tags) => {
+		console.log('roomstate');
+		console.log(channel);
+		console.log(tags['room-id']);
+		getHelixJSON('bits/cheermotes?broadcaster_id=' + tags['room-id']).then(result => {
+			if(result?.data) {
+				console.log(result.data);
+				cheermoteRegex = generateCheermoteRegex(result.data.map(e => e.prefix));
+			}
+		});
+	});
 	client.on('message', (channel, user, message, self) => {
 		if (self) return;
 		if (user['message-type'] === 'chat' || user['message-type'] === 'action') {
 			if (window.speechSynthesis.speaking) {
 				console.warn('SpeechSynthesisUtterance.speaking, skipped message: ' + message);
 			} else {
-				message = removeEmotesExceptFirst(message, user.emotes);
+				message = removeEmotesExceptFirst(message, user.emotes);  //needs be be execute before altering the message
 				message = removeEmojisExceptFirst(message);
 				speak(message, new FormData(chatVoice), function () {
 					console.log('message was spoken: ' + message);
@@ -263,9 +291,9 @@ function start(e){
 			}
 		}
 	});
-	
 	client.on('cheer', (target, userstate, message) => {
-		message = removeEmotesExceptFirst(message, userstate.emotes);
+		message = removeEmotesExceptFirst(message, userstate.emotes); //needs be be execute before altering the message
+		message = message.replaceAll(cheermoteRegex, '');
 		message = removeEmojisExceptFirst(message);
 		message = `cheer ${userstate.bits} bits from ${userstate.username}: "${message}"`;
 		speak(message, new FormData(chatVoice), function () {
@@ -273,9 +301,9 @@ function start(e){
 		});
 	});
 	
-	client.on("resub", (channel, username, months, message, userstate, methods) => {
-		let cumulativeMonths = ~~userstate["msg-param-cumulative-months"];
-		message = removeEmotesExceptFirst(message, userstate.emotes);
+	client.on('resub', (channel, username, months, message, userstate, methods) => {
+		let cumulativeMonths = ~~userstate['msg-param-cumulative-months'];
+		message = removeEmotesExceptFirst(message, userstate.emotes);  //needs be be execute before altering the message
 		message = removeEmojisExceptFirst(message);
 		message = `resub ${cumulativeMonths} month from ${username}: "${message}"`;
 		speak(message, new FormData(chatVoice), function () {
@@ -296,16 +324,7 @@ function testStatusVoice(e){
 	e.submitter.disabled = true;
 	const formData = new FormData(e.target);
 	speak('Stream Status', formData);
-	getStreamStatus(document.querySelector('#channel').value).then(result => {
-		let statusMessage = '';
-		if(result?.data?.[0]?.type=='live') {
-			statusMessage = 'live with ' + result?.data?.[0]?.viewer_count + ' Viewers';
-		} else {
-			statusMessage = 'offline';
-		}
-		speak(statusMessage, formData, () => e.submitter.disabled = false);
-	});
-
+	checkStreamStatus(() => e.submitter.disabled = false);
 	return false;
 }
 
@@ -321,13 +340,14 @@ function speak(msg, formData, onEnd) {
 	if (msg !== '') {
 		lastSpeekTime = new Date();
 		const utterThis = new SpeechSynthesisUtterance(msg);
+		//TODO workarround Edge Multilingual '&' bug
 
 		utterThis.onend = onEnd;
 
 		utterThis.onerror = (event) => {
 			console.error(event);
 			self.reportError(new Error('Speech error: ' + event.error));
-			if(onEnd) onEnd();
+			if(typeof onEnd === 'function') onEnd();
 		};
 		
 		const voiceName = formData.get('voice');
