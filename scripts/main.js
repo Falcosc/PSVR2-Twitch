@@ -188,11 +188,14 @@ async function getHelixJSON(path) {
 		} catch (error) {
 			content = await response.text();
 		}
-		if(response.ok) {
-			return content;
-		} else {
-			self.reportError(new Error(([response.statusText || response.status, JSON.stringify(content)].join(': '))));
+		if(!response.ok) {
+			if(response.status === 401) {
+				displayErrorMsg('Your Twitch connection expired, you need to authorize again.')
+			} else {
+				self.reportError(new Error(([response.statusText || response.status, JSON.stringify(content)].join(': '))));
+			}
 		}
+		return content; //return either success or error content
 	} catch (error) {
 		self.reportError(new Error(err));
 	}
@@ -322,6 +325,7 @@ function stop(e){
 
 function testStatusVoice(e){
 	e.submitter.disabled = true;
+	e.preventDefault();
 	const formData = new FormData(e.target);
 	speak('Stream Status', formData);
 	checkStreamStatus(() => e.submitter.disabled = false);
@@ -330,6 +334,7 @@ function testStatusVoice(e){
 
 function testChatVoice(e){
 	e.submitter.disabled = true;
+	e.preventDefault();
 	const msg = voiceDetails.get(navigator.language.substr(0,2))?.testUtterance || 'PS VR 2 Twitch Chat';
 	speak(msg, new FormData(e.target), () => e.submitter.disabled = false);
 	return false;

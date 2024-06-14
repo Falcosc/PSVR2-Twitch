@@ -41,21 +41,24 @@ svg {
 		</template>
 	</div>
 	<script>
-	function displayError(source, lineno, colno, error, stack){
-		const file = source?.replace(/.*\//,'/').replace(/[?#].*/,'');
-		const time = (new Date()).toLocaleTimeString();
+	function displayErrorMsg(msg, stack){
 		const errorLine = document.querySelector("#errorLine").content.cloneNode(true);
 		let span = errorLine.querySelectorAll("span");
-		span[0].textContent = `${time} ${file}:${lineno}:${colno} ${error}`;
+		span[0].textContent = msg;
 		span[1].textContent = stack;
 		document.querySelector("#lastError").appendChild(errorLine);
 		document.querySelector("#lastError").style.display = 'block';
 	}
+	function handleError(source, lineno, colno, error, stack){
+		const file = source?.replace(/.*\//,'/').replace(/[?#].*/,'');
+		const time = (new Date()).toLocaleTimeString();
+		displayErrorMsg(`${time} ${file}:${lineno}:${colno} ${error}`, stack);
+	}
 	window.onerror = (event, source, lineno, colno, error) => {
-		displayError(source, lineno, colno, error, error?.stack);
+		handleError(source, lineno, colno, error, error?.stack);
 	}
 	window.addEventListener("unhandledrejection", (event) => {
-		displayError(event?.reason?.fileName, event?.reason?.lineNumber, event?.reason?.columnNumber, event?.reason?.message, event?.reason?.stack);
+		handleError(event?.reason?.fileName, event?.reason?.lineNumber, event?.reason?.columnNumber, event?.reason?.message, event?.reason?.stack);
 	});
 	</script>
 	<div class="w3-panel w3-pale-yellow w3-border w3-small">
