@@ -17,9 +17,6 @@ form {
 input[type=range] {
 	width:100%;
 }
-svg {
-	vertical-align: middle
-}
 </style>
 <script type="text/javascript" src="scripts/tmi.js"></script>
 <script type="text/javascript" src="scripts/main.js"></script>
@@ -76,7 +73,7 @@ svg {
 		<a href="https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=368mzno8zop311dlixwz4v7qvp0dgz&redirect_uri=https://falcosc.github.io/PSVR2-Twitch/&scope=chat:read&force_verify=true"
 			class="w3-button w3-deep-purple w3-large" style="width:100%">
 			<span id="authorizeLabel">&#x260D; Connect</span>
-			<svg xmlns="http://www.w3.org/2000/svg" height="24" fill="currentColor" viewBox="0 0 16 16">
+			<svg xmlns="http://www.w3.org/2000/svg" height="24" fill="currentColor" viewBox="0 0 16 16" style="vertical-align: middle">
 				<path d="M3.857 0 1 2.857v10.286h3.429V16l2.857-2.857H9.57L14.714 8V0zm9.714 7.429-2.285 2.285H9l-2 2v-2H4.429V1.143h9.142z"/>
 				<path d="M11.857 3.143h-1.143V6.57h1.143zm-3.143 0H7.571V6.57h1.143z"/>
 			</svg>
@@ -86,8 +83,14 @@ svg {
 			<input class="w3-input" type="text" id="channel" disabled>
 		</p>
 		<p>
-			<button class="w3-button w3-green" id="startBtn" disabled>&#x2BC8; Start</button>
-			<button class="w3-button w3-red" id="stopBtn" disabled>&#x25FC; Stop </button>
+			<button class="w3-button w3-green" id="startBtn" disabled>
+				<svg height="10" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 10 10"><polygon points="0,0 10,5 0,10"></polygon></svg>
+				<span>Start</span>
+			</button>
+			<button class="w3-button w3-red" id="stopBtn" disabled>
+				<svg height="10" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 10 10"><polygon points="0,0 10,0 10,10 0,10"></polygon></svg>
+				<span>Stop</span>
+			</button>
 		</p>
 	</form>
 
@@ -106,7 +109,7 @@ svg {
 				<p><label>Pitch</label>
 				<input type="range" min="0" max="2" step="0.1" value="1" name="pitch"></p>
 			</div>
-			<button class="w3-button w3-theme w3-block" type="submit" value="Submit" disabled>&#x1f56a; Test Status Voice</button>
+			<button class="w3-button w3-theme w3-block" type="submit" value="Submit" disabled>&#x1F50A;&#xFE0E; Test Status Voice</button>
 		</form>
 	</div>
 	<div class="w3-left w3-card-4 w3-margin-right w3-margin-bottom">
@@ -125,7 +128,7 @@ svg {
 				<p><label>Pitch</label>
 				<input type="range" min="0" max="2" step="0.1" value="1" name="pitch"></p>
 			</div>
-			<button class="w3-button w3-theme w3-block" type="submit" value="Submit" disabled>&#x1f56a; Test Chat Voice</button>
+			<button class="w3-button w3-theme w3-block" type="submit" value="Submit" disabled>&#x1F50A;&#xFE0E; Test Chat Voice</button>
 		</form>
 	</div>
 </body>
