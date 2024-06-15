@@ -31,6 +31,8 @@ function loadSettings() {
 		validateAccessToken(localStorage.getItem('accessToken'));
 	}
 
+	document.querySelectorAll('select[name=voice]').forEach((select) => select.addEventListener('change', onVoiceSelectChange));
+
 	if(localStorage.getItem('lastGetVoiceListBugAgent') == navigator.userAgent) {
 		const androidEdgeHack = document.querySelector('#androidEdgeHack');
 		androidEdgeHack.removeAttribute('hidden');
@@ -56,6 +58,12 @@ function loadSettings() {
 		chatVoice.onsubmit = testChatVoice;
 		chatVoice.getElementsByTagName('button')[0].removeAttribute('disabled');
 	});
+}
+
+function onVoiceSelectChange(e) {
+	//online Microsoft Voices don't have support for pitch
+	const hasNoPitchSupport = e.target.value.includes('Microsoft') && e.target.value.includes('Online');
+	e.target.form.querySelector('input[name=pitch]').parentElement.hidden = hasNoPitchSupport;
 }
 
 function pageLifecycleChange() {
@@ -107,6 +115,7 @@ function populateVoicesSelects() {
 	document.querySelector('#statusVoice [name=voice]').value=voices?.find(v => v.lang.includes('en'))?.name;
 	document.querySelector('form[name=chatVoice] [name=voice]').value=voices?.find(v => v.lang.includes(navigator.language))?.name; 
 	//[...document.querySelector('#statusVoice [name=voice]').options].map(o => o.value).includes(voiceFromSettings) 
+	document.querySelectorAll('select[name=voice]').forEach((e) => e.dispatchEvent(new Event('change')));
 }
 
 async function getVoiceOrder() {
