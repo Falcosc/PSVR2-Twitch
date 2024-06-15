@@ -241,7 +241,8 @@ async function requestWakeLock() {
 };
 
 function start(e){
-	e.target.disabled=true;
+	e.currentTarget.disabled=true;
+	e.preventDefault();
 	document.querySelector('#stopBtn').removeAttribute('disabled');
 	document.querySelectorAll('#connectionForm input').forEach(e => e.disabled = true);
 
@@ -317,7 +318,7 @@ function start(e){
 }
 
 function stop(e){
-	e.target.disabled=true;
+	e.currentTarget.disabled=true;
 	client.disconnect();
 	wakeLock?.release();
 	window.location.reload();
@@ -326,7 +327,7 @@ function stop(e){
 function testStatusVoice(e){
 	e.submitter.disabled = true;
 	e.preventDefault();
-	const formData = new FormData(e.target);
+	const formData = new FormData(e.currentTarget);
 	speak('Stream Status', formData);
 	checkStreamStatus(() => e.submitter.disabled = false);
 	return false;
@@ -336,7 +337,7 @@ function testChatVoice(e){
 	e.submitter.disabled = true;
 	e.preventDefault();
 	const msg = voiceDetails.get(navigator.language.substr(0,2))?.testUtterance || 'PS VR 2 Twitch Chat';
-	speak(msg, new FormData(e.target), () => e.submitter.disabled = false);
+	speak(msg, new FormData(e.currentTarget), () => e.submitter.disabled = false);
 	return false;
 }
 
