@@ -1,6 +1,7 @@
 const CLIENT_ID = '368mzno8zop311dlixwz4v7qvp0dgz'; /* keep this in sync with hardcoded oauth2/authorize links */
 const repeatStreamStatusLiveAfterMS = 1000 * 60 * 2; //2min
 const repeatStreamStatusOfflineAfterMS = 1000 * 30; //30s
+const andTranslations = {'en-US':' and ', 'de-DE': ' und ', 'fr-FR': ' et '}; //for Microsoft Multilingual voices bug
 
 let accessToken;
 let client;
@@ -347,7 +348,6 @@ function speak(msg, formData, onEnd) {
 	if (msg !== '') {
 		lastSpeekTime = new Date();
 		const utterThis = new SpeechSynthesisUtterance(msg);
-		//TODO workarround Edge Multilingual '&' bug
 
 		utterThis.onend = onEnd;
 
@@ -362,6 +362,10 @@ function speak(msg, formData, onEnd) {
 		utterThis.volume = formData.get('volume');
 		utterThis.pitch = formData.get('pitch');
 		utterThis.rate = formData.get('rate');
+		if(utterThis?.voice?.name?.includes('Multilingual')) { //avoid Edge Multilingual crash at &
+			utterThis.text = utterThis.text.replaceAll('&', andTranslations[utterThis.voice?.lang] || ' ');
+		}
+		
 		window.speechSynthesis.speak(utterThis);
 	}
 }
