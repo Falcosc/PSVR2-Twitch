@@ -77,8 +77,9 @@ These are my ideas so far, some of them are already implemented:
 - skip chat messages and only read the latest one to interact with game state relevant fresh live comments
 - notification if my streaming system stops working and the stream goes offline (without viewers nobody will inform you if your recording breaks) checks status every 5 seconds
 - audio ping every x minutes in periods of silence to notify that everything is still working
-- notification about viewers, no need to talk to my self if I just record for my self.
+- notification about available viewers, no need to talk to my self if I just record for my self.
 - translate only one emoji per message
+- translate only one emote per message
 
 If you are interested in more, just share your ideas:
 https://github.com/Falcosc/PSVR2-Twitch/discussions

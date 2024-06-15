@@ -329,6 +329,7 @@ function testStatusVoice(e){
 	e.preventDefault();
 	const formData = new FormData(e.currentTarget);
 	speak('Stream Status', formData);
+	lastStatusSpeekTime = 0; //force repeat
 	checkStreamStatus(() => e.submitter.disabled = false);
 	return false;
 }
