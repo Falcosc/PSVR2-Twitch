@@ -174,11 +174,9 @@ function checkStreamStatus(onEnd) {
 			self.reportError(new Error(`Query for ${channel} result: ` + JSON.stringify(result)));
 		}
 		if(statusMessage) {
-			console.log(statusMessage);
-			speak(statusMessage, new FormData(document.querySelector('#statusVoice')), () => {
-				lastStatusSpeekTime = newTime; 
-				if(typeof onEnd === 'function') onEnd();
-			});
+			lastStatusSpeekTime = newTime;
+			//return promise to wait until speech is done
+			return new VoiceMessage(statusMessage).speak(new FormData(document.querySelector('#statusVoice')));
 		}
 	});
 } 
@@ -258,8 +256,8 @@ function start(e){
 
 	let channel = document.querySelector('#channel').value;
 	localStorage.setItem('channel', channel);
-
-	speak('Connect to ' + channel, new FormData(document.querySelector('#statusVoice'))); //iOS needs speak before promise/fetch/Websocket
+	//iOS needs to use speech at least once syncronusly, otherwise the async results can't use speech
+	new VoiceMessage('Connect to ' + channel).speak(new FormData(document.querySelector('#statusVoice'))); 
 	checkStreamStatus();
 	setInterval(checkStreamStatus, 5000);
 
@@ -294,35 +292,34 @@ function start(e){
 	client.on('message', (channel, user, message, self) => {
 		if (self) return;
 		if (user['message-type'] === 'chat' || user['message-type'] === 'action') {
+			const voiceMessage = new VoiceMessage(message);
+			voiceMessage.removeEmotesExceptFirst(user.emotes); //needs be be execute before altering the message
+			voiceMessage.removeEmojisExceptFirst();
 			if (window.speechSynthesis.speaking) {
+				//TODO play up to 30s old messages in reverse (newest first)
 				console.warn('SpeechSynthesisUtterance.speaking, skipped message: ' + message);
 			} else {
-				message = removeEmotesExceptFirst(message, user.emotes);  //needs be be execute before altering the message
-				message = removeEmojisExceptFirst(message);
-				speak(message, new FormData(chatVoice), function () {
-					console.log('message was spoken: ' + message);
-				});
+				voiceMessage.speak(new FormData(chatVoice));
 			}
 		}
 	});
 	client.on('cheer', (target, userstate, message) => {
-		message = removeEmotesExceptFirst(message, userstate.emotes); //needs be be execute before altering the message
-		message = message.replaceAll(cheermoteRegex, '');
-		message = removeEmojisExceptFirst(message);
+		//TODO abort seek (if seek: cancel and seek btn block sound)
+		const voiceMessage = new VoiceMessage(message);
+		voiceMessage.removeEmotesExceptFirst(userstate.emotes); //needs be be execute before altering the message
+		voiceMessage.removeEmojisExceptFirst();
+		voiceMessage.removeAll(cheermoteRegex);
 		message = `cheer ${userstate.bits} bits from ${userstate.username}: "${message}"`;
-		speak(message, new FormData(chatVoice), function () {
-			console.log('message was spoken: ' + message);
-		});
+		new VoiceMessage(message).speak(new FormData(chatVoice)).then(speakSkippedMessage);
 	});
 	
 	client.on('resub', (channel, username, months, message, userstate, methods) => {
 		let cumulativeMonths = ~~userstate['msg-param-cumulative-months'];
-		message = removeEmotesExceptFirst(message, userstate.emotes);  //needs be be execute before altering the message
-		message = removeEmojisExceptFirst(message);
+		const voiceMessage = new VoiceMessage(message);
+		voiceMessage.removeEmotesExceptFirst(userstate.emotes); //needs be be execute before altering the message
+		voiceMessage.removeEmojisExceptFirst();
 		message = `resub ${cumulativeMonths} month from ${username}: "${message}"`;
-		speak(message, new FormData(chatVoice), function () {
-			console.log('message was spoken: ' + message);
-		});
+		new VoiceMessage(message).speak(new FormData(chatVoice)).then(speakSkippedMessage);
 	});
 	requestWakeLock();
 }
@@ -338,73 +335,98 @@ function testStatusVoice(e){
 	e.submitter.disabled = true;
 	e.preventDefault();
 	const formData = new FormData(e.currentTarget);
-	speak('Stream Status', formData);
+	new VoiceMessage('Stream Status').speak(formData);
 	lastStatusSpeekTime = 0; //force repeat
-	checkStreamStatus(() => e.submitter.disabled = false);
+	checkStreamStatus().then(() => e.submitter.disabled = false);
 	return false;
 }
 
 function testChatVoice(e){
 	e.submitter.disabled = true;
 	e.preventDefault();
-	const msg = voiceDetails.get(navigator.language.substr(0,2))?.testUtterance || 'PS VR 2 Twitch Chat';
-	speak(msg, new FormData(e.currentTarget), () => e.submitter.disabled = false);
+	const testMsg = new VoiceMessage(voiceDetails.get(navigator.language.substr(0,2))?.testUtterance || 'PS VR 2 Twitch Chat');
+	testMsg.speak(new FormData(e.currentTarget)).then(() => e.submitter.disabled = false);
 	return false;
 }
 
-
-function speak(msg, formData, onEnd) {
-	if (msg !== '') {
-		lastSpeekTime = new Date();
-		const utterThis = new SpeechSynthesisUtterance(msg);
-
-		utterThis.onend = onEnd;
-
-		utterThis.onerror = (event) => {
+class VoiceMessage {
+	constructor(message) {
+		this.message = message;
+		this.utterance = new SpeechSynthesisUtterance(message);
+		this.date = new Date();
+		this.compleated = false;
+		this.utterance.addEventListener('end', (event) => {
+			this.compleated = true;
+			console.log('spoken: ' + event.utterance.text);
+		});
+		this.utterance.addEventListener('error', (event) => {
+			console.log(this);
 			console.error(event);
 			self.reportError(new Error('Speech error: ' + event.error));
-			if(typeof onEnd === 'function') onEnd();
-		};
+		});
 		
-		const voiceName = formData.get('voice');
-		utterThis.voice = voices?.find(voice => {return voice.name == voiceName});
-		utterThis.volume = formData.get('volume');
-		utterThis.pitch = formData.get('pitch');
-		utterThis.rate = formData.get('rate');
-		if(utterThis?.voice?.name?.includes('Multilingual')) { //avoid Edge Multilingual crash at &
-			utterThis.text = utterThis.text.replaceAll('&', andTranslations[utterThis.voice?.lang] || ' ');
+	}
+	
+	removeEmotesExceptFirst(emotes) {
+		if (!emotes) {
+			return;
 		}
-		
-		window.speechSynthesis.speak(utterThis);
+		let newMessage = [...this.message]; //unicode aware split
+		Object.values(emotes)
+			.flat()
+			.map((e) => e.split('-').map(Number))
+			.sort((a,b) => a[0] > b[0])
+			.slice(1) //remove any emote except index 0
+			.reverse()
+			.forEach((emoteIndices) => newMessage.splice(emoteIndices[0], emoteIndices[1] + 1 - emoteIndices[0]));
+		this.utterance.text = newMessage.join('');
 	}
-}
 
-function removeEmotesExceptFirst(message, emotes) {
-	if (!emotes) {
-		return message;
-	}
-	let newMessage = [...message]; //unicode aware split
-	Object.values(emotes)
-		.flat()
-		.map((e) => e.split('-').map(Number))
-		.sort((a,b) => a[0] > b[0])
-		.slice(1) //remove any emote except index 0
-		.reverse()
-		.forEach((emoteIndices) => newMessage.splice(emoteIndices[0], emoteIndices[1] + 1 - emoteIndices[0]));
-	return newMessage.join('');
-}
-
-function removeEmojisExceptFirst(string) {
-	if (!string) {
-		return message;
-	}
-	let alreadyFound = false;
-	return string.replace(/\p{Extended_Pictographic}(\u200d\p{Extended_Pictographic})*/gu, match => {
-		if (alreadyFound) {
-			return ''
-		} else {
-			alreadyFound = true;
-			return match;
+	removeEmojisExceptFirst() {
+		if (!this.utterance.text) {
+			return;
 		}
-	})
+		let alreadyFound = false;
+		this.utterance.text = this.utterance.text.replace(/\p{Extended_Pictographic}(\u200d\p{Extended_Pictographic})*/gu, match => {
+			if (alreadyFound) {
+				return ''
+			} else {
+				alreadyFound = true;
+				return match;
+			}
+		})
+	}
+	
+	removeAll(regex) {
+		if (this.utterance.text) {
+			this.utterance.text = this.utterance.text.replaceAll(regex, '');
+		}
+	}
+
+	speak(voiceFormData) {
+		return new Promise(resolve => {
+			if (!this.utterance.text) {
+				resolve();
+			}
+			
+			lastSpeekTime = new Date();
+			console.log('queue: ' + this.utterance.text); //see unprocessed text with tmi debug console info
+			
+			this.utterance.addEventListener('end', resolve);
+			this.utterance.addEventListener('error', resolve);
+			if(voiceFormData) {
+				if(!this.utterance.voice) {
+					const voiceName = voiceFormData.get('voice');
+					this.utterance.voice = voices?.find(voice => {return voice.name == voiceName});
+					this.utterance.pitch = voiceFormData.get('pitch');
+					this.utterance.rate = voiceFormData.get('rate');
+					if(this.utterance?.voice?.name?.includes('Multilingual')) { //avoid Edge Multilingual crash at &
+						this.utterance.text = this.utterance.text.replaceAll('&', andTranslations[this.utterance.voice?.lang] || ' ');
+					}
+				}
+				this.utterance.volume = voiceFormData.get('volume'); //always overwrite volume
+			}
+			window.speechSynthesis.speak(this.utterance);
+		});
+	}
 }
