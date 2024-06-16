@@ -1,6 +1,7 @@
 const CLIENT_ID = '368mzno8zop311dlixwz4v7qvp0dgz'; /* keep this in sync with hardcoded oauth2/authorize links */
 const repeatStreamStatusLiveAfterMS = 1000 * 60 * 2; //2min
 const repeatStreamStatusOfflineAfterMS = 1000 * 30; //30s
+const ignoreSkipMessageAfterMS = 1000 * 30; //seconds after skipped message gets ignored
 const andTranslations = {'en-US':' and ', 'de-DE': ' und ', 'fr-FR': ' et '}; //for Microsoft Multilingual voices bug
 
 let accessToken;
@@ -14,6 +15,7 @@ let lastStreamStatus = undefined;
 let voiceOrder;
 const voiceDetails = new Map();
 let cheermoteRegex = generateCheermoteRegex();
+let skippedMessages = [];
 
 
 //todo repeat last text with mediaSession button
@@ -248,6 +250,26 @@ async function requestWakeLock() {
 	}
 };
 
+function speakSkippedMessage() {
+	if (window.speechSynthesis.speaking || !skippedMessages.length) {
+		return;
+	}
+	const now = Date.now();
+	if(now - skippedMessages[skippedMessages.length-1].date.getTime() < ignoreSkipMessageAfterMS) {
+		const chatVoice = document.querySelectorAll('form[name="chatVoice"]')[0];
+		skippedMessages.pop().speak(new FormData(chatVoice)).then(speakSkippedMessage);
+	}
+	const ignoredMsgContainer = document.querySelector('#ignoredMsgContainer');
+	while(skippedMessages.length && now - skippedMessages[0].date.getTime() >= ignoreSkipMessageAfterMS) {
+		const voiceMsg = skippedMessages.shift();
+		const formattedMsg = `[${voiceMsg.date.toTimeString().split(' ')[0]}] ${voiceMsg.message}`;
+		console.warn('ignored ' + formattedMsg);
+		const newLine = document.createElement('div');
+		newLine.textContent = formattedMsg;
+		ignoredMsgContainer.appendChild(newLine)
+	}
+}
+
 function start(e){
 	e.currentTarget.disabled=true;
 	e.preventDefault();
@@ -295,11 +317,10 @@ function start(e){
 			const voiceMessage = new VoiceMessage(message);
 			voiceMessage.removeEmotesExceptFirst(user.emotes); //needs be be execute before altering the message
 			voiceMessage.removeEmojisExceptFirst();
-			if (window.speechSynthesis.speaking) {
-				//TODO play up to 30s old messages in reverse (newest first)
-				console.warn('SpeechSynthesisUtterance.speaking, skipped message: ' + message);
+			if (window.speechSynthesis.speaking) {  //don't queue the new message, because threre could be long or more importand messages
+				skippedMessages.push(voiceMessage); 
 			} else {
-				voiceMessage.speak(new FormData(chatVoice));
+				voiceMessage.speak(new FormData(chatVoice)).then(speakSkippedMessage);
 			}
 		}
 	});
@@ -337,7 +358,9 @@ function testStatusVoice(e){
 	const formData = new FormData(e.currentTarget);
 	new VoiceMessage('Stream Status').speak(formData);
 	lastStatusSpeekTime = 0; //force repeat
-	checkStreamStatus().then(() => e.submitter.disabled = false);
+	checkStreamStatus()
+		.then(() => e.submitter.disabled = false)
+		.then(speakSkippedMessage);
 	return false;
 }
 
@@ -345,7 +368,9 @@ function testChatVoice(e){
 	e.submitter.disabled = true;
 	e.preventDefault();
 	const testMsg = new VoiceMessage(voiceDetails.get(navigator.language.substr(0,2))?.testUtterance || 'PS VR 2 Twitch Chat');
-	testMsg.speak(new FormData(e.currentTarget)).then(() => e.submitter.disabled = false);
+	testMsg.speak(new FormData(e.currentTarget))
+		.then(() => e.submitter.disabled = false)
+		.then(speakSkippedMessage);
 	return false;
 }
 
