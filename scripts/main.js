@@ -447,6 +447,7 @@ class VoiceMessage {
 					this.utterance.rate = voiceFormData.get('rate');
 					if(this.utterance?.voice?.name?.includes('Multilingual')) { //avoid Edge Multilingual crash at &
 						this.utterance.text = this.utterance.text.replaceAll('&', andTranslations[this.utterance.voice?.lang] || ' ');
+						this.utterance.text = this.utterance.text.replace(/[<>]/g,'');
 					}
 				}
 				this.utterance.volume = voiceFormData.get('volume'); //always overwrite volume
