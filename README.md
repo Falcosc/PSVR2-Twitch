@@ -81,6 +81,7 @@ These are my ideas so far, some of them are already implemented:
 - translate only one emoji per message
 - translate only one emote per message
 - read skipped messages most recent first, if no new ones come in
+- stop reading large messages after 40s
 
 If you are interested in more, just share your ideas:
 https://github.com/Falcosc/PSVR2-Twitch/discussions

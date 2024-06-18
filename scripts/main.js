@@ -1,6 +1,7 @@
 const CLIENT_ID = '368mzno8zop311dlixwz4v7qvp0dgz'; /* keep this in sync with hardcoded oauth2/authorize links */
 const repeatStreamStatusLiveAfterMS = 1000 * 60 * 2; //2min
 const repeatStreamStatusOfflineAfterMS = 1000 * 30; //30s
+const largestMessageTimeout = 1000 * 40; //40s is good for 500 chars with one emoji and only some numbers
 const ignoreSkipMessageAfterMS = 1000 * 30; //seconds after skipped message gets ignored
 const andTranslations = {'en-US':' and ', 'de-DE': ' und ', 'fr-FR': ' et '}; //for Microsoft Multilingual voices bug
 
@@ -178,7 +179,8 @@ function checkStreamStatus(onEnd) {
 		if(statusMessage) {
 			lastStatusSpeekTime = newTime;
 			//return promise to wait until speech is done
-			return new VoiceMessage(statusMessage).speak(new FormData(document.querySelector('#statusVoice')));
+			return new VoiceMessage(statusMessage)
+				.speak(new FormData(document.querySelector('#statusVoice')), 7000); //need a tighter 7s limit for repeating speech
 		}
 	});
 } 
@@ -281,7 +283,7 @@ function start(e){
 	//iOS needs to use speech at least once syncronusly, otherwise the async results can't use speech
 	new VoiceMessage('Connect to ' + channel).speak(new FormData(document.querySelector('#statusVoice'))); 
 	checkStreamStatus();
-	setInterval(checkStreamStatus, 5000);
+	setInterval(() => checkStreamStatus().then(speakSkippedMessage), 5000);
 
 	client = new tmi.Client({
 		options: {
@@ -340,6 +342,7 @@ function start(e){
 		voiceMessage.removeEmotesExceptFirst(userstate.emotes); //needs be be execute before altering the message
 		voiceMessage.removeEmojisExceptFirst();
 		message = `resub ${cumulativeMonths} month from ${username}: "${message}"`;
+		//TODO will get los if it lands in queue and we needed to call cancel
 		new VoiceMessage(message).speak(new FormData(chatVoice)).then(speakSkippedMessage);
 	});
 	requestWakeLock();
@@ -374,6 +377,14 @@ function testChatVoice(e){
 	return false;
 }
 
+function withTimeout(time, prom) {
+	let timer;
+	return Promise.race([
+		prom,
+		new Promise((_r, rej) => timer = setTimeout(rej, time, `timeout after ${time}ms`))
+	]).finally(() => clearTimeout(timer));
+}
+
 class VoiceMessage {
 	constructor(message) {
 		this.message = message;
@@ -385,9 +396,13 @@ class VoiceMessage {
 			console.log('spoken: ' + event.utterance.text);
 		});
 		this.utterance.addEventListener('error', (event) => {
-			console.log(this);
-			console.error(event);
-			self.reportError(new Error('Speech error: ' + event.error));
+			if(event.error == 'interrupted') { //regular cancel call
+				console.log('aborted: ' + this.utterance.text);
+			} else {
+				console.log(this);
+				console.error(event);
+				self.reportError(new Error('Speech error: ' + event.error));
+			}
 		});
 		
 	}
@@ -428,8 +443,9 @@ class VoiceMessage {
 		}
 	}
 
-	speak(voiceFormData) {
-		return new Promise(resolve => {
+	speak(voiceFormData, timeout = largestMessageTimeout) {
+		
+		return withTimeout(timeout, new Promise(resolve => {
 			if (!this.utterance.text) {
 				resolve();
 			}
@@ -453,6 +469,9 @@ class VoiceMessage {
 				this.utterance.volume = voiceFormData.get('volume'); //always overwrite volume
 			}
 			window.speechSynthesis.speak(this.utterance);
+		})).catch((e) => {
+			console.log(e);
+			window.speechSynthesis.cancel();
 		});
 	}
 }
