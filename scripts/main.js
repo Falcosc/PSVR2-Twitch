@@ -39,6 +39,7 @@ function loadSettings() {
 	if(localStorage.getItem('lastGetVoiceListBugAgent') == navigator.userAgent) {
 		const androidEdgeHack = document.querySelector('#androidEdgeHack');
 		androidEdgeHack.removeAttribute('hidden');
+		document.getSelection().selectAllChildren(androidEdgeHack);
 		const androidEdgeHackBtn = androidEdgeHack.querySelector('button').onclick = () => {
 			androidEdgeHack.setAttribute('hidden', true);
 			loadVoices();
