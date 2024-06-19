@@ -4,6 +4,7 @@ const repeatStreamStatusOfflineAfterMS = 1000 * 30; //30s
 const largestMessageTimeout = 1000 * 40; //40s is good for 500 chars with one emoji and only some numbers
 const ignoreSkipMessageAfterMS = 1000 * 30; //seconds after skipped message gets ignored
 const andTranslations = {'en-US':' and ', 'de-DE': ' und ', 'fr-FR': ' et '}; //for Microsoft Multilingual voices bug
+const audioCtx = new AudioContext();
 
 let accessToken;
 let client;
@@ -17,7 +18,7 @@ let voiceOrder;
 const voiceDetails = new Map();
 let cheermoteRegex = generateCheermoteRegex();
 let skippedMessages = [];
-
+let clickSound;
 
 //todo repeat last text with mediaSession button
 
@@ -62,6 +63,11 @@ function loadSettings() {
 		chatVoice.onsubmit = testChatVoice;
 		chatVoice.getElementsByTagName('button')[0].removeAttribute('disabled');
 	});
+
+	//TODO make it configurable
+	navigator.mediaSession.setActionHandler("play", handleNextMsg);
+	navigator.mediaSession.setActionHandler("pause", handleNextMsg);
+	navigator.mediaSession.setActionHandler("nexttrack", handlePrevMsg);
 }
 
 function onVoiceSelectChange(e) {
@@ -281,8 +287,9 @@ function start(e){
 
 	let channel = document.querySelector('#channel').value;
 	localStorage.setItem('channel', channel);
+	const statusVoiceData = new FormData(document.querySelector('#statusVoice'));
 	//iOS needs to use speech at least once syncronusly, otherwise the async results can't use speech
-	new VoiceMessage('Connect to ' + channel).speak(new FormData(document.querySelector('#statusVoice'))); 
+	new VoiceMessage('Connect to ' + channel).speak(statusVoiceData);
 	checkStreamStatus();
 	setInterval(() => checkStreamStatus().then(speakSkippedMessage), 5000);
 
@@ -347,6 +354,8 @@ function start(e){
 		new VoiceMessage(message).speak(new FormData(chatVoice)).then(speakSkippedMessage);
 	});
 	requestWakeLock();
+	//TODO getter for lazy init
+	clickSound = createClickSound(statusVoiceData.get('volume')*0.5, 1000); //needs to be on a user event
 }
 
 function stop(e){
@@ -475,4 +484,36 @@ class VoiceMessage {
 			window.speechSynthesis.cancel();
 		});
 	}
+}
+
+function createClickSound(volume=0.5, freq=1000, waveType='sine') {
+	const gainNode = audioCtx.createGain();
+	gainNode.connect(audioCtx.destination);
+	gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+
+	const osc = audioCtx.createOscillator();
+	osc.frequency.value = freq;
+	osc.type= waveType;
+	osc.connect(gainNode);
+	osc.start();
+
+	return {
+		play: () => {
+			gainNode.gain.setTargetAtTime(volume, audioCtx.currentTime, 0.005);
+			gainNode.gain.setTargetAtTime(0, audioCtx.currentTime + 0.020, 0.005);
+		}
+	};
+}
+
+function handleNextMsg(){
+	document.querySelector('#nextMsg').animate({opacity: [0, 1]},{duration: 300});
+	clickSound.play();
+	window.speechSynthesis.cancel(); //is not reliable, sometimes it jumps directly to spoken
+	new VoiceMessage('skip to next message is not implemented yet').speak(new FormData(document.querySelector('#statusVoice')))
+}
+function handlePrevMsg(){
+	document.querySelector('#prevMsg').animate({opacity: [0, 1]},{duration: 300});
+	clickSound.play();
+	window.speechSynthesis.cancel();
+	new VoiceMessage('repeat previous message is not implemented yet').speak(new FormData(document.querySelector('#statusVoice')))
 }

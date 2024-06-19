@@ -17,6 +17,10 @@ form {
 input[type=range] {
 	width:100%;
 }
+#nextMsg, #prevMsg {
+	line-height: 0;
+	padding: 11px;
+}
 </style>
 <script type="text/javascript" src="scripts/tmi.js"></script>
 <script type="text/javascript" src="scripts/main.js"></script>
@@ -82,14 +86,57 @@ input[type=range] {
 			<label>Stream/Channel to Monitor</label>
 			<input class="w3-input" type="text" id="channel" disabled>
 		</p>
+		<button type="button" onclick="mediaBtnMap.classList.toggle('w3-show')" class="w3-button w3-block w3-theme-d3">Media Button Mapping</button>
+		<div id="mediaBtnMap" class="w3-hide">
+			<div><label>skip to next message</label>
+			<select class="w3-input w3-select" name="nextKey">
+				<option>play</option>
+				<option>pause</option>
+				<option>stop</option>
+				<option>seekbackward</option>
+				<option>seekforward</option>
+				<option>seekto</option>
+				<option>previoustrack</option>
+				<option selected>nexttrack</option>
+				<option>skipad</option>
+				<option>togglecamera</option>
+				<option>togglemicrophone</option>
+				<option>hangup</option>
+			</select></div>
+			<p><label>abort current and repeat previous message</label>
+			<select class="w3-input w3-select" name="prevKey">
+				<option>play</option>
+				<option>pause</option>
+				<option>stop</option>
+				<option>seekbackward</option>
+				<option>seekforward</option>
+				<option>seekto</option>
+				<option selected>previoustrack</option>
+				<option>nexttrack</option>
+				<option>skipad</option>
+				<option>togglecamera</option>
+				<option>togglemicrophone</option>
+				<option>hangup</option>
+			</select></p>
+		</div>
+		<button type="button" onclick="allSettings.classList.toggle('w3-show')" class="w3-button w3-block w3-theme-d3">Settings</button>
+		<div id="allSettings" class="w3-hide">
+			<span>Currently all timeouts are hardcoded, please tell us which settings need to be adjustable</span>
+		</div>
 		<p>
 			<button class="w3-button w3-green" id="startBtn" disabled>
 				<svg height="10" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 10 10"><polygon points="0,0 10,5 0,10"></polygon></svg>
 				<span>Start</span>
 			</button>
-			<button class="w3-button w3-red" id="stopBtn" disabled>
+			<button class="w3-button w3-red w3-margin-right" id="stopBtn" disabled>
 				<svg height="10" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 10 10"><polygon points="0,0 10,0 10,10 0,10"></polygon></svg>
 				<span>Stop</span>
+			</button>
+			<button type="button" class="w3-button" id="prevMsg" onclick="handlePrevMsg()">
+				<svg height="15" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 10 10"><polygon points="10,0 1,5 1,0 0,0 0,10 1,10 1,5 10,10"></polygon></svg>
+			</button>
+			<button type="button" class="w3-button" id="nextMsg" onclick="handleNextMsg()">
+				<svg height="15" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 10 10"><polygon points="0,0 9,5 9,0 10,0 10,10 9,10 9,5 0,10"></polygon></svg>
 			</button>
 		</p>
 	</form>
