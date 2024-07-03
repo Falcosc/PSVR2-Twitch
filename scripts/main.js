@@ -22,6 +22,8 @@ let clickSound;
 
 //todo repeat last text with mediaSession button
 
+document.addEventListener("DOMContentLoaded", loadSettings)
+
 function loadSettings() {
 	document.querySelector('#channel').value = localStorage.getItem('channel');
 	document.querySelector('#startBtn').onclick = start;
@@ -218,7 +220,7 @@ async function getHelixJSON(path) {
 		}
 		return content; //return either success or error content
 	} catch (error) {
-		self.reportError(new Error(err));
+		self.reportError(new Error(error));
 	}
 }
 
