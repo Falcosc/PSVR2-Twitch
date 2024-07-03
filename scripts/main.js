@@ -68,6 +68,8 @@ function loadSettings() {
 	navigator.mediaSession.setActionHandler("play", handleNextMsg);
 	navigator.mediaSession.setActionHandler("pause", handleNextMsg);
 	navigator.mediaSession.setActionHandler("nexttrack", handlePrevMsg);
+	navigator.mediaSession.setActionHandler("previoustrack", handlePrevMsg);
+	document.querySelector("audio").volume = 0.01;
 }
 
 function onVoiceSelectChange(e) {
@@ -284,6 +286,7 @@ function start(e){
 	e.preventDefault();
 	document.querySelector('#stopBtn').removeAttribute('disabled');
 	document.querySelectorAll('#connectionForm input').forEach(e => e.disabled = true);
+	document.querySelector("audio").play();
 
 	let channel = document.querySelector('#channel').value;
 	localStorage.setItem('channel', channel);
@@ -396,8 +399,9 @@ function withTimeout(time, prom) {
 }
 
 class VoiceMessage {
-	constructor(message) {
+	constructor(message, username = '') {
 		this.message = message;
+		this.username = username;
 		this.utterance = new SpeechSynthesisUtterance(message);
 		this.date = new Date();
 		this.compleated = false;
@@ -462,7 +466,10 @@ class VoiceMessage {
 			
 			lastSpeekTime = new Date();
 			console.log('queue: ' + this.utterance.text); //see unprocessed text with tmi debug console info
-			
+			navigator.mediaSession.metadata = new MediaMetadata({
+				title: 'Twitch ' + this.username,
+				artist: this.message
+			});
 			this.utterance.addEventListener('end', resolve);
 			this.utterance.addEventListener('error', resolve);
 			if(voiceFormData) {
